@@ -1,0 +1,132 @@
+import Phaser from "phaser";
+
+import type { SimEvent } from "../types/events";
+import type { GameState } from "../types/game";
+
+export class HUD {
+  private readonly resourcesText: Phaser.GameObjects.Text;
+  private readonly phaseText: Phaser.GameObjects.Text;
+  private readonly queenHpText: Phaser.GameObjects.Text;
+  private readonly queenHpFill: Phaser.GameObjects.Rectangle;
+  private readonly readyButton: Phaser.GameObjects.Container;
+  private readonly cliffhangerOverlay: Phaser.GameObjects.Container;
+
+  constructor(
+    private readonly scene: Phaser.Scene,
+    onReady: () => void,
+    onPlayAgain: () => void,
+  ) {
+    this.resourcesText = this.scene.add.text(24, 18, "", {
+      color: "#f2f2f2",
+      fontFamily: "Arial, sans-serif",
+      fontSize: "18px",
+    });
+    this.phaseText = this.scene.add
+      .text(1176, 18, "", {
+        color: "#f2f2f2",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "18px",
+        align: "right",
+      })
+      .setOrigin(1, 0);
+
+    this.scene.add
+      .rectangle(450, 28, QUEEN_BAR_WIDTH, QUEEN_BAR_HEIGHT, 0x1d1611, 0.92)
+      .setOrigin(0, 0.5);
+    this.queenHpFill = this.scene.add
+      .rectangle(450, 28, QUEEN_BAR_WIDTH, QUEEN_BAR_HEIGHT, 0xeb5757, 1)
+      .setOrigin(0, 0.5);
+    this.queenHpText = this.scene.add
+      .text(600, 28, "", {
+        color: "#ffffff",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "15px",
+        align: "center",
+      })
+      .setOrigin(0.5);
+
+    this.readyButton = this.createButton(1050, 828, "Ready", onReady);
+    this.cliffhangerOverlay = this.createCliffhangerOverlay(onPlayAgain);
+  }
+
+  sync(state: Readonly<GameState>, events: SimEvent[]): void {
+    this.resourcesText.setText(
+      `Food ${Math.floor(state.resources.food)} | Soil ${Math.floor(state.resources.soil)} | Resin ${Math.floor(
+        state.resources.resin,
+      )}`,
+    );
+    this.phaseText.setText(`Wave ${state.wave}/14\n${state.phase.toUpperCase()}`);
+
+    const hpRatio = state.queenMaxHp > 0 ? Phaser.Math.Clamp(state.queenHp / state.queenMaxHp, 0, 1) : 0;
+    this.queenHpFill.setSize(QUEEN_BAR_WIDTH * hpRatio, QUEEN_BAR_HEIGHT);
+    this.queenHpText.setText(`Queen ${Math.ceil(state.queenHp)} / ${state.queenMaxHp}`);
+
+    if (events.some((event) => event.type === "QUEEN_HIT")) {
+      this.pulseQueenHp();
+    }
+
+    this.readyButton.setVisible(state.phase !== "wave" && state.phase !== "ended");
+    this.cliffhangerOverlay.setVisible(state.phase === "ended");
+  }
+
+  private createButton(x: number, y: number, label: string, onClick: () => void): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(x, y).setDepth(1500);
+    const background = this.scene.add
+      .rectangle(0, 0, 132, 44, 0x2d9cdb, 0.95)
+      .setStrokeStyle(2, 0xf2f2f2, 0.8)
+      .setInteractive({ useHandCursor: true });
+    const text = this.scene.add
+      .text(0, 0, label, {
+        color: "#ffffff",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "20px",
+      })
+      .setOrigin(0.5);
+
+    background.on("pointerdown", onClick);
+    container.add([background, text]);
+    return container;
+  }
+
+  private createCliffhangerOverlay(onPlayAgain: () => void): Phaser.GameObjects.Container {
+    const overlay = this.scene.add.container(600, 450).setDepth(2500).setVisible(false);
+    const background = this.scene.add.rectangle(0, 0, 1200, 900, 0x050403, 0.94);
+    const title = this.scene.add
+      .text(0, -96, "Something stirs below.\nThe colony holds its breath.", {
+        color: "#f2f2f2",
+        fontFamily: "Georgia, serif",
+        fontSize: "34px",
+        align: "center",
+        lineSpacing: 10,
+      })
+      .setOrigin(0.5);
+    const subtitle = this.scene.add
+      .text(0, 24, "Cliffhanger - Act 2 coming in Segment 3", {
+        color: "#bdbdbd",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "20px",
+      })
+      .setOrigin(0.5);
+    const playAgain = this.createButton(0, 116, "Play Again", onPlayAgain);
+
+    overlay.add([background, title, subtitle, playAgain]);
+    return overlay;
+  }
+
+  private pulseQueenHp(): void {
+    this.scene.tweens.killTweensOf(this.queenHpFill);
+    this.queenHpFill.setAlpha(1);
+    this.scene.tweens.add({
+      targets: this.queenHpFill,
+      alpha: 0.35,
+      duration: 110,
+      yoyo: true,
+      repeat: 2,
+      ease: "Quad.easeOut",
+      onComplete: () => this.queenHpFill.setAlpha(1),
+    });
+  }
+}
+
+const QUEEN_BAR_WIDTH = 300;
+const QUEEN_BAR_HEIGHT = 18;

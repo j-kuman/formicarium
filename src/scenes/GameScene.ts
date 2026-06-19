@@ -7,9 +7,11 @@ import { EnemyRenderer } from "../render/EnemyRenderer";
 import { MapRenderer } from "../render/MapRenderer";
 import type { GameSim } from "../sim/GameSim";
 import type { DefenseData, EnemyData, MapData, TuningData } from "../types/data";
+import type { UIScene } from "./UIScene";
 
 export class GameScene extends Phaser.Scene {
   private sim!: GameSim;
+  private uiScene!: UIScene;
   private commandQueue!: CommandQueue;
   private mapRenderer!: MapRenderer;
   private enemyRenderer!: EnemyRenderer;
@@ -22,7 +24,8 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     this.sim = window.__sim as GameSim;
-    this.commandQueue = new CommandQueue();
+    this.uiScene = this.scene.get("UIScene") as UIScene;
+    this.commandQueue = this.uiScene.commandQueue;
     this.mapRenderer = new MapRenderer(this, this.commandQueue);
     this.enemyRenderer = new EnemyRenderer(this, this.cache.json.get("enemies") as EnemyData[]);
     this.defenseRenderer = new DefenseRenderer(this, this.cache.json.get("defenses") as DefenseData[]);
@@ -37,9 +40,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
+    if (window.__sim && this.sim !== window.__sim) {
+      this.sim = window.__sim as GameSim;
+    }
+
     const events = this.sim.tick(delta, this.commandQueue.flush());
     const state = this.sim.getState();
     this.effectRenderer.process(events, state);
+    this.uiScene.sync(state, events);
     this.mapRenderer.update(state);
     this.enemyRenderer.update(state);
     this.defenseRenderer.update(state);
