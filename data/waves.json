@@ -87,7 +87,7 @@
     "foreshadowMessage": "Hairline fractures observed beneath the queen chamber.",
     "afterWaveEvent": "underbreach_trigger",
     "spawns": [
-      { "enemy": "beetle_tank", "count": 3, "entrance": "entrance_center", "target": "queen", "intervalTicks": 120 },
+      { "enemy": "beetle_tank", "count": 2, "entrance": "entrance_center", "target": "queen", "intervalTicks": 120 },
       { "enemy": "wasp_assassin", "count": 4, "entrance": "entrance_right", "target": "queen", "intervalTicks": 90 },
       { "enemy": "spider_runner", "count": 5, "entrance": "entrance_left", "target": "queen", "intervalTicks": 60 },
       { "enemy": "robber_ant", "count": 4, "entrance": "entrance_left", "target": "food", "intervalTicks": 50 }
