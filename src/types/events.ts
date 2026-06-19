@@ -29,5 +29,6 @@ export interface SimEvent {
   toPhase?: string;
   wave?: number;
   message?: string;
+  foreshadowType?: string;
   payload?: Record<string, unknown>;
 }
