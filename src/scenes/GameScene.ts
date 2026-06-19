@@ -2,10 +2,11 @@ import Phaser from "phaser";
 
 import { CommandQueue } from "../input/CommandQueue";
 import { DefenseRenderer } from "../render/DefenseRenderer";
+import { EffectRenderer } from "../render/EffectRenderer";
 import { EnemyRenderer } from "../render/EnemyRenderer";
 import { MapRenderer } from "../render/MapRenderer";
 import type { GameSim } from "../sim/GameSim";
-import type { DefenseData, EnemyData } from "../types/data";
+import type { DefenseData, EnemyData, MapData, TuningData } from "../types/data";
 
 export class GameScene extends Phaser.Scene {
   private sim!: GameSim;
@@ -13,6 +14,7 @@ export class GameScene extends Phaser.Scene {
   private mapRenderer!: MapRenderer;
   private enemyRenderer!: EnemyRenderer;
   private defenseRenderer!: DefenseRenderer;
+  private effectRenderer!: EffectRenderer;
 
   constructor() {
     super("GameScene");
@@ -24,6 +26,11 @@ export class GameScene extends Phaser.Scene {
     this.mapRenderer = new MapRenderer(this, this.commandQueue);
     this.enemyRenderer = new EnemyRenderer(this, this.cache.json.get("enemies") as EnemyData[]);
     this.defenseRenderer = new DefenseRenderer(this, this.cache.json.get("defenses") as DefenseData[]);
+    this.effectRenderer = new EffectRenderer(
+      this,
+      this.cache.json.get("tuning") as TuningData,
+      this.cache.json.get("map") as MapData,
+    );
     this.cameras.main.setBackgroundColor("#050403");
     this.cameras.main.setBounds(0, 0, 1200, 1100);
     this.mapRenderer.init(this.sim.getState());
@@ -31,8 +38,8 @@ export class GameScene extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     const events = this.sim.tick(delta, this.commandQueue.flush());
-    void events;
     const state = this.sim.getState();
+    this.effectRenderer.process(events, state);
     this.mapRenderer.update(state);
     this.enemyRenderer.update(state);
     this.defenseRenderer.update(state);
