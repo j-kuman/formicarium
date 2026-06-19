@@ -85,6 +85,18 @@ export interface ChamberData {
   };
 }
 
+export interface UnitData {
+  id: string;
+  name: string;
+  hp: number;
+  attack: number;
+  speed: number;
+  role: string;
+  repairRatePerTick?: number;
+  costPerUnit: Partial<Record<keyof Resources, number>>;
+  requiresBarracks?: boolean;
+}
+
 export interface NodeData {
   id: string;
   type: NodeState["type"];

@@ -59,6 +59,11 @@ export class PhaseController {
     }
 
     if (state.phase === "recovery" && elapsedTicks >= tuning.recoveryPhaseDurationTicks) {
+      if (state.breachTriggered && !state.deepNodesVisible) {
+        state.phaseTick = tuning.recoveryPhaseDurationTicks - 1;
+        return null;
+      }
+
       const nextWaveNumber = state.wave + 1;
       return {
         toPhase: this.currentWave(nextWaveNumber) ? "scout" : "ended",
