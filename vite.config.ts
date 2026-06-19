@@ -1,5 +1,3 @@
 import { defineConfig } from "vite";
 
-export default defineConfig({
-  assetsInclude: ["**/*.json"],
-});
+export default defineConfig({});

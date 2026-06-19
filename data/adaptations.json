@@ -1,0 +1,38 @@
+[
+  {
+    "id": "spore_scrubber_unlock",
+    "name": "Spore Scrubbers",
+    "requires": { "fungal_sample": 3 },
+    "unlocks": "defense:spore_scrubber"
+  },
+  {
+    "id": "vibration_sentinel_unlock",
+    "name": "Vibration Sentinels",
+    "requires": { "pale_borer_sample": 2 },
+    "unlocks": "defense:vibration_sentinel"
+  },
+  {
+    "id": "pheromone_anchor_unlock",
+    "name": "Pheromone Anchors",
+    "requires": { "pheromone_leech": 2 },
+    "unlocks": "defense:pheromone_anchor"
+  },
+  {
+    "id": "deep_guard_caste",
+    "name": "Deep Guard Caste",
+    "requires": { "pale_borer_sample": 4, "fungal_sample": 2 },
+    "unlocks": "unit:deep_guard"
+  },
+  {
+    "id": "acid_recomposition",
+    "name": "Acid Recomposition",
+    "requires": { "blind_centipede_larva": 1 },
+    "unlocks": "upgrade:acid_sprayer_deep"
+  },
+  {
+    "id": "brood_quarantine",
+    "name": "Brood Quarantine",
+    "requires": { "brood_worm": 2 },
+    "unlocks": "passive:brood_contamination_resist"
+  }
+]

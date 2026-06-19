@@ -1,0 +1,74 @@
+[
+  {
+    "id": "resin_barricade",
+    "name": "Resin Barricade",
+    "placement": "edge",
+    "cost": { "resin": 20 },
+    "hp": 80,
+    "effects": { "slowFactor": 0.65 },
+    "tags": ["primitive", "slow", "blocker"],
+    "upgrade": {
+      "cost": { "resin": 35 },
+      "hp": 150,
+      "effects": { "slowFactor": 0.45 }
+    }
+  },
+  {
+    "id": "acid_sprayer",
+    "name": "Acid Sprayer",
+    "placement": "node",
+    "cost": { "soil": 25, "resin": 10 },
+    "hp": 60,
+    "effects": { "dps": 8, "dotDuration": 3, "cooldownTicks": 60 },
+    "tags": ["damage", "dot"],
+    "upgrade": {
+      "cost": { "soil": 40, "resin": 20 },
+      "hp": 100,
+      "effects": { "dps": 16, "dotDuration": 5, "cooldownTicks": 45 }
+    }
+  },
+  {
+    "id": "guard_post",
+    "name": "Guard Post",
+    "placement": "node",
+    "cost": { "soil": 30, "food": 15 },
+    "hp": 120,
+    "effects": { "dps": 12, "cooldownTicks": 1 },
+    "tags": ["melee", "blocker"],
+    "upgrade": {
+      "cost": { "soil": 50, "food": 25 },
+      "hp": 200,
+      "effects": { "dps": 22, "cooldownTicks": 1 }
+    }
+  },
+  {
+    "id": "spore_scrubber",
+    "name": "Spore Scrubber",
+    "placement": "node",
+    "cost": { "soil": 20, "food": 10 },
+    "hp": 50,
+    "effects": { "cleanRatePerTick": 0.025 },
+    "tags": ["deep", "adaptation", "cleanse"],
+    "requiresAdaptation": "spore_scrubber_unlock"
+  },
+  {
+    "id": "vibration_sentinel",
+    "name": "Vibration Sentinel",
+    "placement": "node",
+    "cost": { "soil": 35 },
+    "hp": 70,
+    "effects": { "detectsBurrowers": true, "warningTicks": 120 },
+    "tags": ["deep", "adaptation", "detect"],
+    "requiresAdaptation": "vibration_sentinel_unlock"
+  },
+  {
+    "id": "pheromone_anchor",
+    "name": "Pheromone Anchor",
+    "placement": "node",
+    "cost": { "resin": 30, "food": 20 },
+    "hp": 80,
+    "effects": { "preventsPanic": true },
+    "tags": ["deep", "adaptation", "command"],
+    "requiresAdaptation": "pheromone_anchor_unlock"
+  }
+]

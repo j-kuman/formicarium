@@ -1,0 +1,56 @@
+[
+  {
+    "id": "queen",
+    "name": "Queen Chamber",
+    "hp": 200,
+    "defenseSlots": 2,
+    "squadSlot": true,
+    "passiveEffect": null,
+    "upgradeable": false
+  },
+  {
+    "id": "brood",
+    "name": "Brood Chamber",
+    "hp": 100,
+    "defenseSlots": 1,
+    "squadSlot": true,
+    "passiveEffect": { "type": "ant_production", "ratePerWave": 2 },
+    "upgrade": {
+      "cost": { "food": 40, "soil": 20 },
+      "passiveEffect": { "type": "ant_production", "ratePerWave": 4 }
+    }
+  },
+  {
+    "id": "food",
+    "name": "Food Store",
+    "hp": 80,
+    "defenseSlots": 1,
+    "squadSlot": true,
+    "passiveEffect": { "type": "food_cap_bonus", "amount": 100 },
+    "upgrade": {
+      "cost": { "soil": 30 },
+      "passiveEffect": { "type": "food_cap_bonus", "amount": 200 }
+    }
+  },
+  {
+    "id": "barracks",
+    "name": "Barracks",
+    "hp": 90,
+    "defenseSlots": 1,
+    "squadSlot": true,
+    "passiveEffect": { "type": "unlock_major_ant_at_wave", "wave": 4 },
+    "upgrade": {
+      "cost": { "food": 50, "soil": 30 },
+      "passiveEffect": { "type": "squad_capacity_bonus", "amount": 2 }
+    }
+  },
+  {
+    "id": "study",
+    "name": "Study Chamber",
+    "hp": 60,
+    "defenseSlots": 0,
+    "squadSlot": false,
+    "passiveEffect": null,
+    "unlocksAfterBreach": true
+  }
+]

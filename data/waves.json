@@ -1,0 +1,96 @@
+[
+  {
+    "wave": 1,
+    "act": 1,
+    "warningTicks": 300,
+    "spawns": [
+      { "enemy": "mite_swarm", "count": 3, "entrance": "entrance_left", "target": "brood", "intervalTicks": 60 }
+    ]
+  },
+  {
+    "wave": 2,
+    "act": 1,
+    "warningTicks": 300,
+    "spawns": [
+      { "enemy": "mite_swarm", "count": 4, "entrance": "entrance_right", "target": "brood", "intervalTicks": 50 },
+      { "enemy": "beetle_tank", "count": 1, "entrance": "entrance_center", "target": "queen", "intervalTicks": 0 }
+    ]
+  },
+  {
+    "wave": 3,
+    "act": 1,
+    "warningTicks": 300,
+    "spawns": [
+      { "enemy": "spider_runner", "count": 2, "entrance": "entrance_left", "target": "queen", "intervalTicks": 90 },
+      { "enemy": "mite_swarm", "count": 5, "entrance": "entrance_right", "target": "brood", "intervalTicks": 40 }
+    ]
+  },
+  {
+    "wave": 4,
+    "act": 1,
+    "warningTicks": 270,
+    "spawns": [
+      { "enemy": "robber_ant", "count": 3, "entrance": "entrance_left", "target": "food", "intervalTicks": 60 },
+      { "enemy": "beetle_tank", "count": 1, "entrance": "entrance_center", "target": "queen", "intervalTicks": 0 },
+      { "enemy": "mite_swarm", "count": 4, "entrance": "entrance_right", "target": "brood", "intervalTicks": 45 }
+    ]
+  },
+  {
+    "wave": 5,
+    "act": 1,
+    "warningTicks": 270,
+    "spawns": [
+      { "enemy": "wasp_assassin", "count": 1, "entrance": "entrance_center", "target": "queen", "intervalTicks": 0 },
+      { "enemy": "robber_ant", "count": 4, "entrance": "entrance_left", "target": "food", "intervalTicks": 50 },
+      { "enemy": "spider_runner", "count": 3, "entrance": "entrance_right", "target": "queen", "intervalTicks": 80 }
+    ]
+  },
+  {
+    "wave": 6,
+    "act": 1,
+    "warningTicks": 240,
+    "spawns": [
+      { "enemy": "beetle_tank", "count": 2, "entrance": "entrance_center", "target": "queen", "intervalTicks": 180 },
+      { "enemy": "wasp_assassin", "count": 2, "entrance": "entrance_right", "target": "queen", "intervalTicks": 120 },
+      { "enemy": "mite_swarm", "count": 6, "entrance": "entrance_left", "target": "brood", "intervalTicks": 35 }
+    ]
+  },
+  {
+    "wave": 7,
+    "act": 1,
+    "warningTicks": 240,
+    "foreshadow": "tremor",
+    "foreshadowMessage": "Vibrations detected below mapped colony.",
+    "spawns": [
+      { "enemy": "robber_ant", "count": 5, "entrance": "entrance_left", "target": "food", "intervalTicks": 45 },
+      { "enemy": "spider_runner", "count": 4, "entrance": "entrance_right", "target": "queen", "intervalTicks": 70 },
+      { "enemy": "wasp_assassin", "count": 2, "entrance": "entrance_center", "target": "queen", "intervalTicks": 150 }
+    ]
+  },
+  {
+    "wave": 8,
+    "act": 1,
+    "warningTicks": 240,
+    "foreshadow": "worker_refusal",
+    "foreshadowMessage": "Workers refuse to enter lower tunnels.",
+    "spawns": [
+      { "enemy": "beetle_tank", "count": 3, "entrance": "entrance_center", "target": "queen", "intervalTicks": 150 },
+      { "enemy": "wasp_assassin", "count": 3, "entrance": "entrance_right", "target": "queen", "intervalTicks": 100 },
+      { "enemy": "robber_ant", "count": 6, "entrance": "entrance_left", "target": "food", "intervalTicks": 40 }
+    ]
+  },
+  {
+    "wave": 9,
+    "act": 1,
+    "warningTicks": 240,
+    "foreshadow": "crack",
+    "foreshadowMessage": "Hairline fractures observed beneath the queen chamber.",
+    "afterWaveEvent": "underbreach_trigger",
+    "spawns": [
+      { "enemy": "beetle_tank", "count": 3, "entrance": "entrance_center", "target": "queen", "intervalTicks": 120 },
+      { "enemy": "wasp_assassin", "count": 4, "entrance": "entrance_right", "target": "queen", "intervalTicks": 90 },
+      { "enemy": "spider_runner", "count": 5, "entrance": "entrance_left", "target": "queen", "intervalTicks": 60 },
+      { "enemy": "robber_ant", "count": 4, "entrance": "entrance_left", "target": "food", "intervalTicks": 50 }
+    ]
+  }
+]

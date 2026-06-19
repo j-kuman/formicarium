@@ -1,0 +1,16 @@
+{
+  "ticksPerSecond": 60,
+  "startingResources": { "food": 120, "soil": 80, "resin": 40 },
+  "resourceCaps": { "food": 200, "soil": 9999, "resin": 9999 },
+  "recoveryIncomePer10Ticks": { "food": 8, "soil": 4, "resin": 2 },
+  "recoveryPhaseDurationTicks": 120,
+  "buildPhaseDurationTicks": 300,
+  "breachRevealDelayTicks": 180,
+  "cameraShakeDurationMs": 1000,
+  "cameraShakeIntensity": 0.02,
+  "breachFlashDurationMs": 500,
+  "breachCameraScrollDurationMs": 2000,
+  "enemyDeathLingerTicks": 60,
+  "patrolIntervalTicks": 60,
+  "squadRetaliationDpsMultiplier": 0.5
+}

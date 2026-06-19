@@ -1,0 +1,31 @@
+[
+  {
+    "id": "worker",
+    "name": "Worker",
+    "hp": 10,
+    "attack": 2,
+    "speed": 1.5,
+    "role": "repair",
+    "repairRatePerTick": 0.5,
+    "costPerUnit": { "food": 8 }
+  },
+  {
+    "id": "soldier",
+    "name": "Soldier",
+    "hp": 30,
+    "attack": 10,
+    "speed": 1.2,
+    "role": "melee",
+    "costPerUnit": { "food": 15 }
+  },
+  {
+    "id": "major_ant",
+    "name": "Major Ant",
+    "hp": 80,
+    "attack": 18,
+    "speed": 0.7,
+    "role": "tank",
+    "costPerUnit": { "food": 30 },
+    "requiresBarracks": true
+  }
+]

@@ -1,0 +1,42 @@
+{
+  "mapWidth": 1200,
+  "mapHeight": 1100,
+  "viewportHeight": 900,
+  "nodes": [
+    { "id": "entrance_left", "type": "entrance", "x": 100, "y": 50, "visible": true, "defenseSlots": 0, "squadSlot": false, "hp": 9999, "maxHp": 9999 },
+    { "id": "entrance_center", "type": "entrance", "x": 600, "y": 50, "visible": true, "defenseSlots": 0, "squadSlot": false, "hp": 9999, "maxHp": 9999 },
+    { "id": "entrance_right", "type": "entrance", "x": 1100, "y": 50, "visible": true, "defenseSlots": 0, "squadSlot": false, "hp": 9999, "maxHp": 9999 },
+    { "id": "junc_upper_left", "type": "junction", "x": 200, "y": 160, "visible": true, "defenseSlots": 1, "squadSlot": true, "hp": 60, "maxHp": 60 },
+    { "id": "food_store", "type": "food", "x": 360, "y": 160, "visible": true, "defenseSlots": 1, "squadSlot": true, "hp": 80, "maxHp": 80 },
+    { "id": "junc_upper_right", "type": "junction", "x": 950, "y": 160, "visible": true, "defenseSlots": 1, "squadSlot": true, "hp": 60, "maxHp": 60 },
+    { "id": "junc_mid_center", "type": "junction", "x": 600, "y": 280, "visible": true, "defenseSlots": 2, "squadSlot": true, "hp": 80, "maxHp": 80 },
+    { "id": "fungus_farm", "type": "junction", "x": 300, "y": 360, "visible": true, "defenseSlots": 1, "squadSlot": false, "hp": 60, "maxHp": 60 },
+    { "id": "barracks", "type": "barracks", "x": 820, "y": 360, "visible": true, "defenseSlots": 1, "squadSlot": true, "hp": 90, "maxHp": 90 },
+    { "id": "brood_chamber", "type": "brood", "x": 560, "y": 430, "visible": true, "defenseSlots": 1, "squadSlot": true, "hp": 100, "maxHp": 100 },
+    { "id": "deep_defense", "type": "junction", "x": 600, "y": 520, "visible": true, "defenseSlots": 2, "squadSlot": true, "hp": 70, "maxHp": 70 },
+    { "id": "queen_chamber", "type": "queen", "x": 600, "y": 610, "visible": true, "defenseSlots": 2, "squadSlot": true, "hp": 200, "maxHp": 200 },
+    { "id": "deep_junction_a", "type": "deep_junction", "x": 400, "y": 730, "visible": false, "defenseSlots": 1, "squadSlot": true, "hp": 50, "maxHp": 50 },
+    { "id": "deep_junction_b", "type": "deep_junction", "x": 780, "y": 760, "visible": false, "defenseSlots": 1, "squadSlot": true, "hp": 50, "maxHp": 50 },
+    { "id": "study_chamber", "type": "study", "x": 280, "y": 840, "visible": false, "defenseSlots": 0, "squadSlot": false, "hp": 60, "maxHp": 60 },
+    { "id": "deep_entrance_a", "type": "deep_entrance", "x": 180, "y": 870, "visible": false, "defenseSlots": 0, "squadSlot": false, "hp": 9999, "maxHp": 9999 },
+    { "id": "deep_entrance_b", "type": "deep_entrance", "x": 940, "y": 890, "visible": false, "defenseSlots": 0, "squadSlot": false, "hp": 9999, "maxHp": 9999 }
+  ],
+  "edges": [
+    { "id": "e_entL_juncUL", "nodeA": "entrance_left", "nodeB": "junc_upper_left", "width": "large", "length": 120, "visible": true, "defenseSlots": 1, "hp": 9999, "maxHp": 9999 },
+    { "id": "e_entC_juncMC", "nodeA": "entrance_center", "nodeB": "junc_mid_center", "width": "large", "length": 230, "visible": true, "defenseSlots": 2, "hp": 9999, "maxHp": 9999 },
+    { "id": "e_entR_juncUR", "nodeA": "entrance_right", "nodeB": "junc_upper_right", "width": "large", "length": 120, "visible": true, "defenseSlots": 1, "hp": 9999, "maxHp": 9999 },
+    { "id": "e_juncUL_food", "nodeA": "junc_upper_left", "nodeB": "food_store", "width": "ant", "length": 80, "visible": true, "defenseSlots": 1, "hp": 60, "maxHp": 60 },
+    { "id": "e_juncUL_juncMC", "nodeA": "junc_upper_left", "nodeB": "junc_mid_center", "width": "large", "length": 160, "visible": true, "defenseSlots": 1, "hp": 60, "maxHp": 60 },
+    { "id": "e_juncUR_juncMC", "nodeA": "junc_upper_right", "nodeB": "junc_mid_center", "width": "large", "length": 175, "visible": true, "defenseSlots": 1, "hp": 60, "maxHp": 60 },
+    { "id": "e_juncMC_fungus", "nodeA": "junc_mid_center", "nodeB": "fungus_farm", "width": "ant", "length": 120, "visible": true, "defenseSlots": 0, "hp": 60, "maxHp": 60 },
+    { "id": "e_juncMC_brcks", "nodeA": "junc_mid_center", "nodeB": "barracks", "width": "ant", "length": 140, "visible": true, "defenseSlots": 0, "hp": 60, "maxHp": 60 },
+    { "id": "e_juncMC_brood", "nodeA": "junc_mid_center", "nodeB": "brood_chamber", "width": "large", "length": 110, "visible": true, "defenseSlots": 1, "hp": 80, "maxHp": 80 },
+    { "id": "e_brood_deepDef", "nodeA": "brood_chamber", "nodeB": "deep_defense", "width": "large", "length": 90, "visible": true, "defenseSlots": 1, "hp": 80, "maxHp": 80 },
+    { "id": "e_deepDef_queen", "nodeA": "deep_defense", "nodeB": "queen_chamber", "width": "large", "length": 90, "visible": true, "defenseSlots": 2, "hp": 100, "maxHp": 100 },
+    { "id": "e_queen_deepA", "nodeA": "queen_chamber", "nodeB": "deep_junction_a", "width": "large", "length": 130, "visible": false, "defenseSlots": 1, "hp": 80, "maxHp": 80 },
+    { "id": "e_queen_deepB", "nodeA": "queen_chamber", "nodeB": "deep_junction_b", "width": "large", "length": 160, "visible": false, "defenseSlots": 1, "hp": 80, "maxHp": 80 },
+    { "id": "e_deepA_study", "nodeA": "deep_junction_a", "nodeB": "study_chamber", "width": "ant", "length": 80, "visible": false, "defenseSlots": 0, "hp": 50, "maxHp": 50 },
+    { "id": "e_deepA_entA", "nodeA": "deep_junction_a", "nodeB": "deep_entrance_a", "width": "large", "length": 150, "visible": false, "defenseSlots": 1, "hp": 50, "maxHp": 50 },
+    { "id": "e_deepB_entB", "nodeA": "deep_junction_b", "nodeB": "deep_entrance_b", "width": "large", "length": 160, "visible": false, "defenseSlots": 1, "hp": 50, "maxHp": 50 }
+  ]
+}
