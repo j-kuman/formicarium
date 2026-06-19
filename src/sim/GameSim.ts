@@ -3,10 +3,11 @@ import { CombatResolver } from "./CombatResolver";
 import { Pathfinder } from "./Pathfinder";
 import { PhaseController } from "./PhaseController";
 import { ResourceManager } from "./ResourceManager";
+import { SquadController } from "./SquadController";
 import { WaveSpawner } from "./WaveSpawner";
 import type { InputCommand } from "../types/commands";
 import type { ChamberData, DefenseData, EnemyData, MapData, TuningData, UnitData, WaveData } from "../types/data";
-import type { DefenseInstance, EdgeState, GameState, NodeState } from "../types/game";
+import type { DefenseInstance, EdgeState, GameState, NodeState, Resources, SquadInstance } from "../types/game";
 import type { SimEvent } from "../types/events";
 
 interface GameSimData {
@@ -25,10 +26,12 @@ export class GameSim {
   private readonly phaseController: PhaseController;
   private readonly resourceManager: ResourceManager;
   private readonly waveSpawner: WaveSpawner;
+  private readonly squadController: SquadController;
   private readonly combatResolver: CombatResolver;
   private readonly breachController: BreachController;
   private accumulatorMs = 0;
   private nextDefenseId = 1;
+  private nextSquadId = 1;
   private readonly startedWaves = new Set<number>();
   private readonly processedAfterWaveEvents = new Set<number>();
 
@@ -40,11 +43,14 @@ export class GameSim {
     this.phaseController = new PhaseController(data.waves);
     this.resourceManager = new ResourceManager();
     this.waveSpawner = new WaveSpawner(data.waves, data.enemies, pathfinder);
+    this.squadController = new SquadController(data.units, pathfinder, data.tuning);
     this.combatResolver = new CombatResolver(
       data.enemies,
       data.defenses,
       this.resourceManager,
       data.tuning.enemySpeedScale ?? 1,
+      data.units,
+      data.tuning,
     );
     this.breachController = new BreachController(data.waves, data.tuning);
 
@@ -83,6 +89,7 @@ export class GameSim {
     this.startWaveIfNeeded(events);
 
     events.push(...this.waveSpawner.tick(this.state));
+    events.push(...this.squadController.tick(this.state, deltaMs));
     events.push(...this.combatResolver.tick(this.state, deltaMs));
     events.push(...this.breachController.tick(this.state));
     events.push(...this.processAfterWaveEvent());
@@ -109,6 +116,12 @@ export class GameSim {
         this.upgradeDefense(command.defenseInstanceId);
       } else if (command.type === "upgrade_chamber") {
         this.upgradeChamber(command.nodeId);
+      } else if (command.type === "spawn_squad") {
+        this.spawnSquad(command);
+      } else if (command.type === "assign_squad") {
+        this.assignSquad(command);
+      } else if (command.type === "set_squad_stance") {
+        this.setSquadStance(command);
       }
     }
   }
@@ -166,6 +179,65 @@ export class GameSim {
     this.resourceManager.recomputeCaps(this.state, this.data.chambers);
   }
 
+  private spawnSquad(command: Extract<InputCommand, { type: "spawn_squad" }>): void {
+    const unit = this.data.units.find((entry) => entry.id === command.unitTypeId);
+    const count = Math.floor(command.count);
+    if (!unit || count <= 0 || !this.unitUnlocked(unit)) {
+      return;
+    }
+
+    const placement = this.validSquadPlacement(command.nodeId, command.edgeId);
+    if (!placement) {
+      return;
+    }
+
+    const cost = this.scaleCost(unit.costPerUnit, count);
+    if (!this.resourceManager.spend(this.state, cost)) {
+      return;
+    }
+
+    const maxHp = unit.hp * count;
+    const squad: SquadInstance = {
+      id: `squad_${this.nextSquadId++}`,
+      typeId: unit.id,
+      count,
+      assignedNodeId: placement.kind === "node" ? placement.id : null,
+      assignedEdgeId: placement.kind === "edge" ? placement.id : null,
+      stance: unit.repairRatePerTick ? "repair" : "hold",
+      hp: maxHp,
+      maxHp,
+      panicTicksRemaining: 0,
+      patrolAnchorNodeId: placement.kind === "node" ? placement.id : undefined,
+      inCombat: false,
+    };
+    this.state.squads.push(squad);
+  }
+
+  private assignSquad(command: Extract<InputCommand, { type: "assign_squad" }>): void {
+    const squad = this.state.squads.find((entry) => entry.id === command.squadId);
+    const placement = this.validSquadPlacement(command.nodeId, command.edgeId);
+    if (!squad || !placement) {
+      return;
+    }
+
+    squad.assignedNodeId = placement.kind === "node" ? placement.id : null;
+    squad.assignedEdgeId = placement.kind === "edge" ? placement.id : null;
+    squad.patrolAnchorNodeId = placement.kind === "node" ? placement.id : undefined;
+    squad.patrolTargetNodeId = undefined;
+  }
+
+  private setSquadStance(command: Extract<InputCommand, { type: "set_squad_stance" }>): void {
+    const squad = this.state.squads.find((entry) => entry.id === command.squadId);
+    const unit = squad ? this.data.units.find((entry) => entry.id === squad.typeId) : undefined;
+    if (!squad || (command.stance === "repair" && !unit?.repairRatePerTick)) {
+      return;
+    }
+
+    squad.stance = command.stance;
+    squad.previousStance = undefined;
+    squad.panicTicksRemaining = 0;
+  }
+
   private startWaveIfNeeded(events: SimEvent[]): void {
     if (this.state.phase !== "wave" || this.startedWaves.has(this.state.wave)) {
       return;
@@ -217,6 +289,43 @@ export class GameSim {
     }
 
     return null;
+  }
+
+  private validSquadPlacement(
+    nodeId: string | undefined,
+    edgeId: string | undefined,
+  ): { kind: "node" | "edge"; id: string } | null {
+    if (nodeId) {
+      const node = this.state.nodes.get(nodeId);
+      if (node?.visible && node.squadSlot) {
+        return { kind: "node", id: nodeId };
+      }
+    }
+
+    if (edgeId) {
+      const edge = this.state.edges.get(edgeId);
+      if (edge?.visible) {
+        return { kind: "edge", id: edgeId };
+      }
+    }
+
+    return null;
+  }
+
+  private unitUnlocked(unit: UnitData): boolean {
+    if (!unit.requiresBarracks) {
+      return true;
+    }
+
+    return [...this.state.nodes.values()].some((node) => node.visible && node.type === "barracks");
+  }
+
+  private scaleCost(cost: Partial<Record<keyof Resources, number>>, count: number): Partial<Record<keyof Resources, number>> {
+    const scaled: Partial<Record<keyof Resources, number>> = {};
+    for (const [resource, amount] of Object.entries(cost)) {
+      scaled[resource as keyof Resources] = (amount ?? 0) * count;
+    }
+    return scaled;
   }
 
   private initialState(map: MapData, tuning: TuningData): GameState {

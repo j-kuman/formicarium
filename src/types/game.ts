@@ -99,6 +99,11 @@ export interface SquadInstance {
   stance: SquadStance;
   hp: number;
   maxHp: number;
+  panicTicksRemaining?: number;
+  previousStance?: SquadStance;
+  patrolAnchorNodeId?: string;
+  patrolTargetNodeId?: string;
+  inCombat?: boolean;
 }
 
 export interface DefenseInstance {

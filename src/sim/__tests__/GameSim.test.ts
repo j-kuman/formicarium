@@ -54,6 +54,18 @@ describe("GameSim", () => {
     expect(sim.getState().resources.soil).toBe(70);
   });
 
+  it("spawns a squad at a valid squad slot and deducts per-unit cost", () => {
+    const sim = buildSim();
+    const step = 1000 / tuning.ticksPerSecond;
+
+    sim.tick(step, [{ type: "spawn_squad", unitTypeId: "soldier", count: 2, nodeId: "junction" }]);
+
+    expect(sim.getState().squads).toHaveLength(1);
+    expect(sim.getState().squads[0]?.assignedNodeId).toBe("junction");
+    expect(sim.getState().squads[0]?.maxHp).toBe(60);
+    expect(sim.getState().resources.food).toBe(70);
+  });
+
   it("starts a wave when build advances to wave", () => {
     const sim = buildSim();
     const step = 1000 / tuning.ticksPerSecond;
@@ -86,6 +98,7 @@ const tuning: TuningData = {
   enemyDeathLingerTicks: 60,
   patrolIntervalTicks: 60,
   squadRetaliationDpsMultiplier: 0.5,
+  squadPanicRetreatTicks: 100,
 };
 
 const map: MapData = {
@@ -190,4 +203,14 @@ const defenses: DefenseData[] = [
 ];
 
 const chambers: ChamberData[] = [];
-const units: UnitData[] = [];
+const units: UnitData[] = [
+  {
+    id: "soldier",
+    name: "Soldier",
+    hp: 30,
+    attack: 10,
+    speed: 1.2,
+    role: "melee",
+    costPerUnit: { food: 15 },
+  },
+];

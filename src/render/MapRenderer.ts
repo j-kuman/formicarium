@@ -96,11 +96,19 @@ export class MapRenderer {
       return;
     }
 
+    if (this.tryPlaceSquad("node", nodeId)) {
+      return;
+    }
+
     this.commandQueue.push({ type: "select_node", nodeId });
   }
 
   private handleEdgeClick(edgeId: string): void {
     if (this.tryPlaceDefense("edge", edgeId)) {
+      return;
+    }
+
+    if (this.tryPlaceSquad("edge", edgeId)) {
       return;
     }
 
@@ -130,6 +138,28 @@ export class MapRenderer {
     return true;
   }
 
+  private tryPlaceSquad(kind: "node" | "edge", id: string): boolean {
+    const request = this.commandQueue.getPlacementSquadRequest();
+    const state = this.currentState;
+    if (!request || !state) {
+      return false;
+    }
+
+    if (!this.hasAvailableSquadLocation(state, kind, id)) {
+      return true;
+    }
+
+    if (kind === "node") {
+      this.commandQueue.push({ type: "spawn_squad", unitTypeId: request.unitTypeId, count: request.count, nodeId: id });
+    } else {
+      this.commandQueue.push({ type: "spawn_squad", unitTypeId: request.unitTypeId, count: request.count, edgeId: id });
+    }
+
+    this.commandQueue.finishPlacement();
+    this.scene.game.canvas.style.cursor = "default";
+    return true;
+  }
+
   private hasAvailableSlot(state: Readonly<GameState>, kind: "node" | "edge", id: string): boolean {
     if (kind === "node") {
       const node = state.nodes.get(id);
@@ -140,6 +170,15 @@ export class MapRenderer {
     const edge = state.edges.get(id);
     const occupiedSlots = state.defenses.filter((defense) => defense.edgeId === id).length;
     return Boolean(edge?.visible && occupiedSlots < edge.defenseSlots);
+  }
+
+  private hasAvailableSquadLocation(state: Readonly<GameState>, kind: "node" | "edge", id: string): boolean {
+    if (kind === "node") {
+      const node = state.nodes.get(id);
+      return Boolean(node?.visible && node.squadSlot);
+    }
+
+    return Boolean(state.edges.get(id)?.visible);
   }
 
   private redrawEdges(state: Readonly<GameState>): void {

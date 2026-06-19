@@ -5,8 +5,9 @@ import { DefenseRenderer } from "../render/DefenseRenderer";
 import { EffectRenderer } from "../render/EffectRenderer";
 import { EnemyRenderer } from "../render/EnemyRenderer";
 import { MapRenderer } from "../render/MapRenderer";
+import { SquadRenderer } from "../render/SquadRenderer";
 import type { GameSim } from "../sim/GameSim";
-import type { DefenseData, EnemyData, MapData, TuningData } from "../types/data";
+import type { DefenseData, EnemyData, MapData, TuningData, UnitData } from "../types/data";
 import type { UIScene } from "./UIScene";
 
 export class GameScene extends Phaser.Scene {
@@ -16,6 +17,7 @@ export class GameScene extends Phaser.Scene {
   private mapRenderer!: MapRenderer;
   private enemyRenderer!: EnemyRenderer;
   private defenseRenderer!: DefenseRenderer;
+  private squadRenderer!: SquadRenderer;
   private effectRenderer!: EffectRenderer;
 
   constructor() {
@@ -37,6 +39,7 @@ export class GameScene extends Phaser.Scene {
       this.cache.json.get("defenses") as DefenseData[],
       this.commandQueue,
     );
+    this.squadRenderer = new SquadRenderer(this, this.cache.json.get("units") as UnitData[]);
     this.effectRenderer = new EffectRenderer(
       this,
       this.cache.json.get("tuning") as TuningData,
@@ -59,5 +62,6 @@ export class GameScene extends Phaser.Scene {
     this.mapRenderer.update(state);
     this.enemyRenderer.update(state, events);
     this.defenseRenderer.update(state);
+    this.squadRenderer.update(state);
   }
 }

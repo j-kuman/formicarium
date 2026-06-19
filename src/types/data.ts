@@ -144,6 +144,7 @@ export interface TuningData {
   enemyDeathLingerTicks: number;
   patrolIntervalTicks: number;
   squadRetaliationDpsMultiplier: number;
+  squadPanicRetreatTicks: number;
   // Multiplier on enemy traversal speed. Without it, the (length * 1000) denominator
   // makes enemies crawl (~67s per edge at the 60fps fixed step). Tune in the balance pass.
   enemySpeedScale?: number;

@@ -1,6 +1,6 @@
 import { ResourceManager } from "./ResourceManager";
-import type { DefenseData, EnemyData } from "../types/data";
-import type { DefenseInstance, EnemyInstance, GameState } from "../types/game";
+import type { DefenseData, EnemyData, TuningData, UnitData } from "../types/data";
+import type { DefenseInstance, EnemyInstance, GameState, SquadInstance } from "../types/game";
 import type { SimEvent } from "../types/events";
 
 export class CombatResolver {
@@ -9,6 +9,8 @@ export class CombatResolver {
     private readonly defenses: DefenseData[],
     private readonly resourceManager = new ResourceManager(),
     private readonly speedScale = 1,
+    private readonly units: UnitData[] = [],
+    private readonly tuning?: Pick<TuningData, "squadRetaliationDpsMultiplier" | "squadPanicRetreatTicks">,
   ) {}
 
   tick(state: GameState, deltaMs: number): SimEvent[] {
@@ -16,6 +18,7 @@ export class CombatResolver {
     this.moveEnemies(state, deltaMs, events);
     this.resetEnemySlows(state);
     this.resolveDefenses(state, deltaMs, events);
+    this.resolveSquads(state, deltaMs, events);
     this.tickDots(state, events);
     return events;
   }
@@ -159,6 +162,47 @@ export class CombatResolver {
     }
   }
 
+  private resolveSquads(state: GameState, deltaMs: number, events: SimEvent[]): void {
+    for (const squad of state.squads) {
+      squad.inCombat = false;
+    }
+
+    for (const squad of [...state.squads]) {
+      const unit = this.unitData(squad);
+      if (!unit) {
+        continue;
+      }
+
+      const enemiesAtLocation = state.enemies.filter((enemy) => this.squadCanReachEnemy(state, squad, enemy));
+      if (enemiesAtLocation.length === 0) {
+        continue;
+      }
+
+      squad.inCombat = true;
+      const damage = unit.attack * squad.count * (deltaMs / 1000);
+      for (const enemy of [...enemiesAtLocation]) {
+        if (!state.enemies.includes(enemy)) {
+          continue;
+        }
+
+        enemy.hp -= damage;
+        if (enemy.hp <= 0) {
+          this.killEnemy(state, enemy, events);
+        }
+      }
+
+      const livingEnemies = state.enemies.filter((enemy) => this.squadCanReachEnemy(state, squad, enemy));
+      if (livingEnemies.length === 0) {
+        continue;
+      }
+
+      squad.hp -= unit.attack * this.squadRetaliationMultiplier() * (deltaMs / 1000) * livingEnemies.length;
+      if (squad.hp <= 0) {
+        this.panicSquad(state, squad, events);
+      }
+    }
+  }
+
   private enemyReachedGoal(state: GameState, enemy: EnemyInstance, events: SimEvent[]): void {
     const targetNode = state.nodes.get(enemy.targetNodeId);
     if (targetNode) {
@@ -182,6 +226,10 @@ export class CombatResolver {
           nodeId: targetNode.id,
           payload: { damage: enemy.attack },
         });
+      }
+
+      if (this.enemyData(enemy)?.onReach === "panic_nearby_squads") {
+        this.panicNearbySquads(state, targetNode.id);
       }
     }
 
@@ -211,8 +259,81 @@ export class CombatResolver {
     return edge?.nodeA === nodeId || edge?.nodeB === nodeId;
   }
 
+  private squadCanReachEnemy(state: GameState, squad: SquadInstance, enemy: EnemyInstance): boolean {
+    if (squad.assignedEdgeId) {
+      return squad.assignedEdgeId === enemy.edgeId;
+    }
+
+    return Boolean(squad.assignedNodeId && this.enemyInNodeRange(state, enemy, squad.assignedNodeId));
+  }
+
+  private panicNearbySquads(state: GameState, nodeId: string): void {
+    if (!this.tuning) {
+      return;
+    }
+
+    for (const squad of state.squads) {
+      if (!this.squadWithinOneHopOfNode(state, squad, nodeId)) {
+        continue;
+      }
+
+      squad.previousStance ??= squad.stance;
+      squad.stance = "retreat";
+      squad.panicTicksRemaining = this.tuning.squadPanicRetreatTicks;
+    }
+  }
+
+  private squadWithinOneHopOfNode(state: GameState, squad: SquadInstance, nodeId: string): boolean {
+    if (squad.assignedNodeId === nodeId) {
+      return true;
+    }
+
+    if (squad.assignedEdgeId) {
+      const edge = state.edges.get(squad.assignedEdgeId);
+      return Boolean(edge && (edge.nodeA === nodeId || edge.nodeB === nodeId));
+    }
+
+    if (!squad.assignedNodeId) {
+      return false;
+    }
+
+    for (const edge of state.edges.values()) {
+      if (!edge.visible || (edge.nodeA !== nodeId && edge.nodeB !== nodeId)) {
+        continue;
+      }
+
+      if (edge.nodeA === squad.assignedNodeId || edge.nodeB === squad.assignedNodeId) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private enemyData(enemy: EnemyInstance): EnemyData | undefined {
     return this.enemies.find((entry) => entry.id === enemy.typeId);
+  }
+
+  private unitData(squad: SquadInstance): UnitData | undefined {
+    return this.units.find((entry) => entry.id === squad.typeId);
+  }
+
+  private squadRetaliationMultiplier(): number {
+    return this.tuning?.squadRetaliationDpsMultiplier ?? 0;
+  }
+
+  private panicSquad(state: GameState, squad: SquadInstance, events: SimEvent[]): void {
+    const index = state.squads.indexOf(squad);
+    if (index < 0) {
+      return;
+    }
+
+    state.squads.splice(index, 1);
+    events.push({
+      type: "SQUAD_PANICKED",
+      tick: state.tick,
+      payload: { squadId: squad.id, unitTypeId: squad.typeId },
+    });
   }
 
   private shouldEmitDefenseFired(tick: number, deltaMs: number): boolean {

@@ -6,7 +6,7 @@ export type InputCommand =
   | { type: "upgrade_chamber"; nodeId: string }
   | { type: "assign_squad"; squadId: string; nodeId?: string; edgeId?: string }
   | { type: "set_squad_stance"; squadId: string; stance: SquadStance }
-  | { type: "spawn_squad"; unitTypeId: string; count: number }
+  | { type: "spawn_squad"; unitTypeId: string; count: number; nodeId?: string; edgeId?: string }
   | { type: "unlock_adaptation"; adaptationId: string }
   | { type: "advance_phase" }
   | { type: "select_node"; nodeId: string }

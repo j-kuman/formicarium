@@ -39,12 +39,18 @@ export class UIScene extends Phaser.Scene {
       () => this.resetGame(),
       (muted) => this.soundManager?.setMuted(muted),
     );
-    this.buildPanel = new BuildPanel(this, this.commandQueue, this.cache.json.get("defenses") as DefenseData[]);
+    this.buildPanel = new BuildPanel(
+      this,
+      this.commandQueue,
+      this.cache.json.get("defenses") as DefenseData[],
+      this.cache.json.get("units") as UnitData[],
+    );
     this.selectionPanel = new SelectionPanel(
       this,
       this.commandQueue,
       this.cache.json.get("defenses") as DefenseData[],
       this.cache.json.get("chambers") as ChamberData[],
+      this.cache.json.get("units") as UnitData[],
     );
     this.waveAlert = new WaveAlert(
       this,

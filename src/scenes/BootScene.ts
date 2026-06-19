@@ -69,6 +69,14 @@ export class BootScene extends Phaser.Scene {
     this.rectangleTexture("defense_barricade", 30, 8, 0x2f80ed);
     this.circleTexture("defense_acid", 10, 0x27ae60);
     this.rectangleTexture("defense_guard", 20, 20, 0xf2f2f2);
+    this.circleTexture("unit_worker", 9, 0x6fcf97);
+    this.triangleTexture("unit_soldier", 18, 0xf2994a);
+    this.diamondTexture("unit_major_ant", 20, 0xeb5757);
+    this.ringTexture("squad_frame_hold", 28, 0xf2f2f2);
+    this.ringTexture("squad_frame_intercept", 28, 0xf2994a);
+    this.ringTexture("squad_frame_retreat", 28, 0x56ccf2);
+    this.ringTexture("squad_frame_repair", 28, 0x6fcf97);
+    this.ringTexture("squad_frame_patrol", 28, 0xf2c94c);
   }
 
   private circleTexture(key: string, radius: number, color: number): void {
@@ -109,6 +117,16 @@ export class BootScene extends Phaser.Scene {
     graphics.fillStyle(color);
     graphics.fillRect(0, 0, width, height);
     graphics.generateTexture(key, width, height);
+    graphics.destroy();
+  }
+
+  private ringTexture(key: string, radius: number, color: number): void {
+    const graphics = this.make.graphics({ x: 0, y: 0 }, false);
+    graphics.lineStyle(4, color, 1);
+    graphics.fillStyle(0x050403, 0.72);
+    graphics.fillCircle(radius, radius, radius - 2);
+    graphics.strokeCircle(radius, radius, radius - 2);
+    graphics.generateTexture(key, radius * 2, radius * 2);
     graphics.destroy();
   }
 }

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { CombatResolver } from "../CombatResolver";
 import { ResourceManager } from "../ResourceManager";
-import type { DefenseData, TuningData } from "../../types/data";
-import type { DefenseInstance, EdgeState, EnemyInstance, GameState, NodeState } from "../../types/game";
+import type { DefenseData, TuningData, UnitData } from "../../types/data";
+import type { DefenseInstance, EdgeState, EnemyInstance, GameState, NodeState, SquadInstance } from "../../types/game";
 
 describe("CombatResolver", () => {
   it("enemy advances along edge each tick proportional to speed and deltaMs", () => {
@@ -304,10 +304,60 @@ it("enemy killed by acid DoT grants reward and emits ENEMY_DIED", () => {
   expect(events.map((event) => event.type)).toContain("ENEMY_DIED");
 });
 
+it("soldier squad assigned to a node deals DPS to enemies on adjacent edges", () => {
+  const state = gameState({
+    enemies: [enemy({ typeId: "beetle_tank", hp: 60, maxHp: 60, speed: 0 })],
+    squads: [squad({ assignedNodeId: "junction", count: 2, typeId: "soldier", hp: 60, maxHp: 60 })],
+  });
+
+  squadResolver().tick(state, 1000);
+
+  expect(state.enemies[0]?.hp).toBe(40);
+  expect(state.squads[0]?.hp).toBe(55);
+  expect(state.squads[0]?.inCombat).toBe(true);
+});
+
+it("removes a squad and emits SQUAD_PANICKED when retaliation drops squad hp to zero", () => {
+  const state = gameState({
+    enemies: [enemy({ hp: 100, speed: 0 })],
+    squads: [squad({ hp: 1, maxHp: 30, assignedEdgeId: "edge_entrance_mid", assignedNodeId: null })],
+  });
+
+  const events = squadResolver().tick(state, 1000);
+
+  expect(state.squads).toHaveLength(0);
+  expect(events.map((event) => event.type)).toContain("SQUAD_PANICKED");
+});
+
+it("pheromone leech reaching a node temporarily forces nearby squads to retreat", () => {
+  const state = gameState({
+    enemies: [
+      enemy({
+        typeId: "pheromone_leech",
+        edgeId: "edge_mid_queen",
+        pathEdges: ["edge_mid_queen"],
+        targetNodeId: "queen_chamber",
+        speed: 200,
+      }),
+    ],
+    squads: [squad({ assignedNodeId: "junction", stance: "hold" })],
+  });
+
+  squadResolver().tick(state, 1000);
+
+  expect(state.squads[0]?.stance).toBe("retreat");
+  expect(state.squads[0]?.previousStance).toBe("hold");
+  expect(state.squads[0]?.panicTicksRemaining).toBe(100);
+});
+
 });
 
 function resolver() {
   return new CombatResolver(enemyData, defenseData);
+}
+
+function squadResolver() {
+  return new CombatResolver(enemyData, defenseData, new ResourceManager(), 1, unitData, tuning);
 }
 
 function gameState(overrides: Partial<GameState> = {}): GameState {
@@ -414,6 +464,21 @@ function defense(overrides: Partial<DefenseInstance> = {}): DefenseInstance {
   };
 }
 
+function squad(overrides: Partial<SquadInstance> = {}): SquadInstance {
+  return {
+    id: "squad_1",
+    typeId: "soldier",
+    count: 1,
+    assignedNodeId: "junction",
+    assignedEdgeId: null,
+    stance: "hold",
+    hp: 30,
+    maxHp: 30,
+    inCombat: false,
+    ...overrides,
+  };
+}
+
 const enemyData = [
   {
     id: "mite_swarm",
@@ -438,6 +503,43 @@ const enemyData = [
     tags: ["deep", "ignores_resin"],
     act: 2,
     reward: { soil: 8 },
+  },
+  {
+    id: "beetle_tank",
+    name: "Beetle Tank",
+    hp: 60,
+    attack: 20,
+    speed: 0.5,
+    armor: 10,
+    targetPriority: ["queen"],
+    tags: ["armored", "large", "surface"],
+    act: 1,
+    reward: { soil: 5 },
+  },
+  {
+    id: "pheromone_leech",
+    name: "Pheromone Leech",
+    hp: 22,
+    attack: 8,
+    speed: 1.6,
+    armor: 0,
+    targetPriority: ["queen"],
+    tags: ["deep", "disrupts_squads"],
+    act: 2,
+    reward: { food: 3 },
+    onReach: "panic_nearby_squads",
+  },
+];
+
+const unitData: UnitData[] = [
+  {
+    id: "soldier",
+    name: "Soldier",
+    hp: 30,
+    attack: 10,
+    speed: 1.2,
+    role: "melee",
+    costPerUnit: { food: 15 },
   },
 ];
 
@@ -486,4 +588,5 @@ const tuning: TuningData = {
   enemyDeathLingerTicks: 60,
   patrolIntervalTicks: 60,
   squadRetaliationDpsMultiplier: 0.5,
+  squadPanicRetreatTicks: 100,
 };

@@ -143,4 +143,5 @@ const tuning: TuningData = {
   enemyDeathLingerTicks: 60,
   patrolIntervalTicks: 60,
   squadRetaliationDpsMultiplier: 0.5,
+  squadPanicRetreatTicks: 100,
 };

@@ -58,7 +58,7 @@ export class HUD {
     this.resourcesText.setText(
       `Food ${Math.floor(state.resources.food)} | Soil ${Math.floor(state.resources.soil)} | Resin ${Math.floor(
         state.resources.resin,
-      )}`,
+      )} | Squads ${state.squads.length}`,
     );
     this.phaseText.setText(`Wave ${state.wave}/14\n${state.phase.toUpperCase()}`);
 
