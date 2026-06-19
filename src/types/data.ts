@@ -63,6 +63,28 @@ export interface DefenseData {
   requiresAdaptation?: string;
 }
 
+export interface ChamberPassiveEffect {
+  type: string;
+  amount?: number;
+  ratePerWave?: number;
+  wave?: number;
+}
+
+export interface ChamberData {
+  id: string;
+  name: string;
+  hp: number;
+  defenseSlots: number;
+  squadSlot: boolean;
+  passiveEffect: ChamberPassiveEffect | null;
+  upgradeable?: boolean;
+  unlocksAfterBreach?: boolean;
+  upgrade?: {
+    cost: Partial<Record<keyof Resources, number>>;
+    passiveEffect: ChamberPassiveEffect;
+  };
+}
+
 export interface NodeData {
   id: string;
   type: NodeState["type"];
