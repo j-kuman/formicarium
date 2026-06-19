@@ -81,6 +81,8 @@ export interface EnemyInstance {
   progress: number;
   pathEdges: string[];
   targetNodeId: string;
+  attack: number;
+  armor: number;
   speed: number;
   slowFactor: number;
   dotDamage: number;
