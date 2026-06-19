@@ -9,12 +9,15 @@ export class HUD {
   private readonly queenHpText: Phaser.GameObjects.Text;
   private readonly queenHpFill: Phaser.GameObjects.Rectangle;
   private readonly readyButton: Phaser.GameObjects.Container;
+  private readonly muteText: Phaser.GameObjects.Text;
   private readonly cliffhangerOverlay: Phaser.GameObjects.Container;
+  private muted = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
     onReady: () => void,
     onPlayAgain: () => void,
+    private readonly onMuteChange: (muted: boolean) => void,
   ) {
     this.resourcesText = this.scene.add.text(24, 18, "", {
       color: "#f2f2f2",
@@ -46,6 +49,8 @@ export class HUD {
       .setOrigin(0.5);
 
     this.readyButton = this.createButton(1050, 828, "Ready", onReady);
+    const muteToggle = this.createMuteToggle(1112, 64);
+    this.muteText = muteToggle.text;
     this.cliffhangerOverlay = this.createCliffhangerOverlay(onPlayAgain);
   }
 
@@ -112,6 +117,31 @@ export class HUD {
 
     overlay.add([background, title, subtitle, playAgain]);
     return overlay;
+  }
+
+  private createMuteToggle(x: number, y: number): { container: Phaser.GameObjects.Container; text: Phaser.GameObjects.Text } {
+    const container = this.scene.add.container(x, y).setDepth(1500);
+    const background = this.scene.add
+      .rectangle(0, 0, 112, 34, 0x1d1611, 0.94)
+      .setStrokeStyle(1, 0xf2f2f2, 0.55)
+      .setInteractive({ useHandCursor: true });
+    const text = this.scene.add
+      .text(0, 0, "Sound", {
+        color: "#ffffff",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "15px",
+      })
+      .setOrigin(0.5);
+
+    background.on("pointerdown", () => this.toggleMute());
+    container.add([background, text]);
+    return { container, text };
+  }
+
+  private toggleMute(): void {
+    this.muted = !this.muted;
+    this.muteText.setText(this.muted ? "Muted" : "Sound");
+    this.onMuteChange(this.muted);
   }
 
   private pulseQueenHp(): void {

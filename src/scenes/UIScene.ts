@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 
+import { SoundManager } from "../audio/SoundManager";
 import { CommandQueue } from "../input/CommandQueue";
 import { GameSim } from "../sim/GameSim";
 import type {
@@ -24,6 +25,7 @@ export class UIScene extends Phaser.Scene {
   private buildPanel: BuildPanel | null = null;
   private selectionPanel: SelectionPanel | null = null;
   private waveAlert: WaveAlert | null = null;
+  private soundManager: SoundManager | null = null;
 
   constructor() {
     super("UIScene");
@@ -35,6 +37,7 @@ export class UIScene extends Phaser.Scene {
       this,
       () => this.commandQueue.push({ type: "advance_phase" }),
       () => this.resetGame(),
+      (muted) => this.soundManager?.setMuted(muted),
     );
     this.buildPanel = new BuildPanel(this, this.commandQueue, this.cache.json.get("defenses") as DefenseData[]);
     this.selectionPanel = new SelectionPanel(
@@ -48,9 +51,11 @@ export class UIScene extends Phaser.Scene {
       this.cache.json.get("waves") as WaveData[],
       this.cache.json.get("enemies") as EnemyData[],
     );
+    this.soundManager = new SoundManager(this.sound);
   }
 
   sync(state: Readonly<GameState>, events: SimEvent[]): void {
+    this.soundManager?.process(events);
     this.hud?.sync(state, events);
     this.buildPanel?.sync(state);
     this.selectionPanel?.sync(state);

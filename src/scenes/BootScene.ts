@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 
+import { SFX_DATA } from "../audio/sfxData";
 import { GameSim } from "../sim/GameSim";
 import type {
   ChamberData,
@@ -23,6 +24,10 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
+    for (const [key, dataUri] of Object.entries(SFX_DATA)) {
+      this.load.audio(key, dataUri);
+    }
+
     this.load.json("tuning", "tuning.json");
     this.load.json("enemies", "enemies.json");
     this.load.json("units", "units.json");
