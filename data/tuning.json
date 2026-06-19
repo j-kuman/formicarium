@@ -12,7 +12,7 @@
   "breachCameraScrollDurationMs": 2000,
   "enemyDeathLingerTicks": 60,
   "patrolIntervalTicks": 60,
-  "squadRetaliationDpsMultiplier": 0.5,
+  "squadRetaliationDpsMultiplier": 1.25,
   "squadPanicRetreatTicks": 100,
   "enemySpeedScale": 30
 }
