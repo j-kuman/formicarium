@@ -63,6 +63,41 @@ describe("Pathfinder", () => {
 
     expect(pathfinder.resolveTarget(["study"], nodes)).toBeNull();
   });
+
+  it("returns empty path when start equals goal", () => {
+    const { pathfinder } = buildGraph();
+
+    expect(pathfinder.findPath("queen_chamber", "queen_chamber")).toEqual([]);
+  });
+
+  it("returns empty path when a node id is missing", () => {
+    const { pathfinder } = buildGraph();
+
+    expect(pathfinder.findPath("entrance", "nope")).toEqual([]);
+    expect(pathfinder.findPath("nope", "queen_chamber")).toEqual([]);
+  });
+
+  it("chooses the fewest-hop path when several exist", () => {
+    const nodes = new Map<string, NodeState>([
+      ["entrance", node("entrance", "entrance")],
+      ["mid", node("mid", "junction")],
+      ["queen_chamber", node("queen_chamber", "queen")],
+    ]);
+    const edges = new Map<string, EdgeState>([
+      ["e_long_1", edge("e_long_1", "entrance", "mid")],
+      ["e_long_2", edge("e_long_2", "mid", "queen_chamber")],
+      ["e_direct", edge("e_direct", "entrance", "queen_chamber")],
+    ]);
+    const pathfinder = new Pathfinder(nodes, edges);
+
+    expect(pathfinder.findPath("entrance", "queen_chamber")).toEqual(["e_direct"]);
+  });
+
+  it("getOtherNode throws when the node is not on the edge", () => {
+    const { edges, pathfinder } = buildGraph();
+
+    expect(() => pathfinder.getOtherNode(edges.get("edge_entrance_a")!, "queen_chamber")).toThrow();
+  });
 });
 
 function buildGraph() {

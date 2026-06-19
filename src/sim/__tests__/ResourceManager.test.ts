@@ -80,6 +80,43 @@ describe("ResourceManager", () => {
 
     expect(state.resources).toEqual({ food: 200, resin: 9999, soil: 9995 });
   });
+
+  it("recovery income only applies on multiples of 10 ticks", () => {
+    const state = gameState({ phase: "recovery", phaseTick: 5, resources: { food: 10, resin: 10, soil: 10 } });
+    const manager = new ResourceManager();
+
+    const events = manager.tick(state, tuning);
+
+    expect(state.resources).toEqual({ food: 10, resin: 10, soil: 10 });
+    expect(events).toEqual([]);
+  });
+
+  it("no recovery income on phaseTick 0", () => {
+    const state = gameState({ phase: "recovery", phaseTick: 0, resources: { food: 10, resin: 10, soil: 10 } });
+    const manager = new ResourceManager();
+
+    manager.tick(state, tuning);
+
+    expect(state.resources).toEqual({ food: 10, resin: 10, soil: 10 });
+  });
+
+  it("spend with empty cost succeeds and changes nothing", () => {
+    const state = gameState({ resources: { food: 10, resin: 10, soil: 10 } });
+    const manager = new ResourceManager();
+
+    expect(manager.spend(state, {})).toBe(true);
+    expect(state.resources).toEqual({ food: 10, resin: 10, soil: 10 });
+  });
+
+  it("grant returns the actually-granted amounts after clamping", () => {
+    const state = gameState({ resources: { food: 198, resin: 9998, soil: 9990 } });
+    const manager = new ResourceManager();
+    manager.tick(state, tuning);
+
+    const granted = manager.grant(state, { food: 50, resin: 5, soil: 5 });
+
+    expect(granted).toEqual({ food: 2, resin: 1, soil: 5 });
+  });
 });
 
 function gameState(overrides: Partial<GameState> = {}): GameState {

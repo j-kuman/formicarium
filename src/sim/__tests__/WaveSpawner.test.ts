@@ -68,6 +68,68 @@ describe("WaveSpawner", () => {
     expect(firstEvents).toContainEqual({ type: "WAVE_STARTED", tick: 0, wave: 1 });
     expect(secondEvents).toEqual([]);
   });
+
+  it("startWave with an unknown wave number zeroes remaining and returns no events", () => {
+    const { spawner, state } = buildFixture();
+    state.waveEnemiesRemaining = 99;
+
+    const events = spawner.startWave(state, 999);
+
+    expect(state.waveEnemiesRemaining).toBe(0);
+    expect(events).toEqual([]);
+  });
+
+  it("spawns every enemy across the wave then stops", () => {
+    const { spawner, state } = buildFixture();
+    spawner.startWave(state, 1);
+
+    for (const t of [0, 60, 120]) {
+      state.tick = t;
+      spawner.tick(state);
+    }
+    expect(state.enemies).toHaveLength(3);
+
+    state.tick = 240;
+    expect(spawner.tick(state)).toEqual([]);
+    expect(state.enemies).toHaveLength(3);
+  });
+
+  it("spawned enemy carries stats from enemy data", () => {
+    const { spawner, state } = buildFixture();
+    spawner.startWave(state, 1);
+    spawner.tick(state);
+
+    expect(state.enemies[0]).toMatchObject({
+      typeId: "mite_swarm",
+      hp: 8,
+      maxHp: 8,
+      speed: 1.8,
+      attack: 5,
+      armor: 0,
+      slowFactor: 1,
+    });
+  });
+
+  it("totals counts across multiple spawn groups", () => {
+    const { state } = buildFixture();
+    const pathfinder = new Pathfinder(state.nodes, state.edges);
+    const multiWave: WaveData[] = [
+      {
+        wave: 1,
+        act: 1,
+        warningTicks: 300,
+        spawns: [
+          { enemy: "mite_swarm", count: 2, entrance: "entrance", target: "queen", intervalTicks: 30 },
+          { enemy: "mite_swarm", count: 3, entrance: "entrance", target: "queen", intervalTicks: 20 },
+        ],
+      },
+    ];
+    const spawner = new WaveSpawner(multiWave, enemies, pathfinder);
+
+    spawner.startWave(state, 1);
+
+    expect(state.waveEnemiesRemaining).toBe(5);
+  });
 });
 
 function buildFixture() {
