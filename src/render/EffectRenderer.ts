@@ -33,14 +33,12 @@ export class EffectRenderer {
     for (const event of events) {
       if (event.type === "FORESHADOW_EVENT") {
         this.scene.cameras.main.shake(this.tuning.cameraShakeDurationMs, this.tuning.cameraShakeIntensity);
-        this.showNarrative(event.message ?? "Something shifts below.");
       } else if (event.type === "QUEEN_HIT") {
         this.showQueenHitOverlay();
       } else if (event.type === "NODE_CONTAMINATED" && event.nodeId) {
         this.showContaminationBurst(state, event.nodeId);
       } else if (event.type === "BREACH_TRIGGERED") {
         this.startBreachSequence();
-        this.showNarrative(event.message ?? "The floor splits. Something moves below.");
       } else if (event.type === "DEEP_NODES_REVEALED") {
         this.fadeInDeepMap(state);
       } else if (event.type === "VICTORY") {
@@ -155,40 +153,5 @@ export class EffectRenderer {
     }
 
     this.victorySequenceActive = true;
-    this.showNarrative("The colony endures.");
-  }
-
-  private showNarrative(message: string): void {
-    const centerX = this.map.mapWidth / 2;
-    const panelWidth = Math.min(760, this.map.mapWidth - 80);
-    const panel = this.scene.add
-      .rectangle(centerX, 128, panelWidth, 72, 0x120f0d, 0.86)
-      .setScrollFactor(0)
-      .setDepth(1000)
-      .setAlpha(1);
-    const text = this.scene.add
-      .text(centerX, 128, message, {
-        color: "#f2f2f2",
-        fontFamily: "Georgia, serif",
-        fontSize: "24px",
-        align: "center",
-        wordWrap: { width: panelWidth - 60 },
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(1001)
-      .setAlpha(1);
-
-    this.scene.tweens.add({
-      targets: [panel, text],
-      alpha: 0,
-      delay: 2200,
-      duration: 500,
-      ease: "Quad.easeOut",
-      onComplete: () => {
-        panel.destroy();
-        text.destroy();
-      },
-    });
   }
 }

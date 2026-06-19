@@ -16,12 +16,14 @@ import type { GameState } from "../types/game";
 import { BuildPanel } from "../ui/BuildPanel";
 import { HUD } from "../ui/HUD";
 import { SelectionPanel } from "../ui/SelectionPanel";
+import { WaveAlert } from "../ui/WaveAlert";
 
 export class UIScene extends Phaser.Scene {
   public readonly commandQueue = new CommandQueue();
   private hud: HUD | null = null;
   private buildPanel: BuildPanel | null = null;
   private selectionPanel: SelectionPanel | null = null;
+  private waveAlert: WaveAlert | null = null;
 
   constructor() {
     super("UIScene");
@@ -41,12 +43,18 @@ export class UIScene extends Phaser.Scene {
       this.cache.json.get("defenses") as DefenseData[],
       this.cache.json.get("chambers") as ChamberData[],
     );
+    this.waveAlert = new WaveAlert(
+      this,
+      this.cache.json.get("waves") as WaveData[],
+      this.cache.json.get("enemies") as EnemyData[],
+    );
   }
 
   sync(state: Readonly<GameState>, events: SimEvent[]): void {
     this.hud?.sync(state, events);
     this.buildPanel?.sync(state);
     this.selectionPanel?.sync(state);
+    this.waveAlert?.sync(state, events);
   }
 
   private resetGame(): void {
