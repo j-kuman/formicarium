@@ -2,6 +2,7 @@ import Phaser from "phaser";
 
 import type { CommandQueue } from "../input/CommandQueue";
 import type { GameState, NodeState } from "../types/game";
+import { getPointOnEdge } from "./edgeGeometry";
 
 interface NodeView {
   container: Phaser.GameObjects.Container;
@@ -85,7 +86,10 @@ export class MapRenderer {
       this.edgeGraphics.lineStyle(lineWidth, color, 0.82);
       this.edgeGraphics.beginPath();
       this.edgeGraphics.moveTo(nodeA.x, nodeA.y);
-      this.edgeGraphics.lineTo(nodeB.x, nodeB.y);
+      for (let step = 1; step <= EDGE_CURVE_SEGMENTS; step += 1) {
+        const point = getPointOnEdge(edge, nodeA, nodeB, step / EDGE_CURVE_SEGMENTS);
+        this.edgeGraphics.lineTo(point.x, point.y);
+      }
       this.edgeGraphics.strokePath();
     }
   }
@@ -136,3 +140,5 @@ export class MapRenderer {
     return 40;
   }
 }
+
+const EDGE_CURVE_SEGMENTS = 16;

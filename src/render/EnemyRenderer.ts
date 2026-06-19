@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 
 import type { EnemyData } from "../types/data";
-import type { EdgeState, EnemyInstance, GameState } from "../types/game";
+import type { EnemyInstance, GameState } from "../types/game";
+import { getPointOnStateEdge } from "./edgeGeometry";
 
 export class EnemyRenderer {
   private readonly containers = new Map<string, Phaser.GameObjects.Container>();
@@ -26,7 +27,7 @@ export class EnemyRenderer {
 
     for (const enemy of state.enemies) {
       const container = this.getOrCreateContainer(enemy);
-      const point = this.getPointOnEdge(state, enemy.edgeId, enemy.progress);
+      const point = getPointOnStateEdge(state, enemy.edgeId, enemy.progress);
       container.setPosition(point.x, point.y);
       container.setScale(Math.max(0.6, enemy.hp / enemy.maxHp));
       container.setVisible(Boolean(state.edges.get(enemy.edgeId)?.visible));
@@ -65,47 +66,5 @@ export class EnemyRenderer {
     }
 
     return "enemy_surface";
-  }
-
-  private getPointOnEdge(
-    state: Readonly<GameState>,
-    edgeId: string,
-    progress: number,
-  ): Phaser.Math.Vector2 {
-    const edge = state.edges.get(edgeId);
-    if (!edge) {
-      return new Phaser.Math.Vector2(0, 0);
-    }
-
-    const nodeA = state.nodes.get(edge.nodeA);
-    const nodeB = state.nodes.get(edge.nodeB);
-    if (!nodeA || !nodeB) {
-      return new Phaser.Math.Vector2(0, 0);
-    }
-
-    const t = Phaser.Math.Clamp(progress, 0, 1);
-    const control = this.controlPoint(edge, nodeA.x, nodeA.y, nodeB.x, nodeB.y);
-    const inverse = 1 - t;
-    const x = inverse * inverse * nodeA.x + 2 * inverse * t * control.x + t * t * nodeB.x;
-    const y = inverse * inverse * nodeA.y + 2 * inverse * t * control.y + t * t * nodeB.y;
-
-    return new Phaser.Math.Vector2(x, y);
-  }
-
-  private controlPoint(
-    edge: EdgeState,
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-  ): Phaser.Math.Vector2 {
-    const midpointX = (startX + endX) / 2;
-    const midpointY = (startY + endY) / 2;
-    const dx = endX - startX;
-    const dy = endY - startY;
-    const length = Math.hypot(dx, dy) || 1;
-    const offset = edge.width === "large" ? 18 : 12;
-
-    return new Phaser.Math.Vector2(midpointX - (dy / length) * offset, midpointY + (dx / length) * offset);
   }
 }
