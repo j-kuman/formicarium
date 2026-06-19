@@ -40,7 +40,12 @@ export class GameSim {
     this.phaseController = new PhaseController(data.waves);
     this.resourceManager = new ResourceManager();
     this.waveSpawner = new WaveSpawner(data.waves, data.enemies, pathfinder);
-    this.combatResolver = new CombatResolver(data.enemies, data.defenses, this.resourceManager);
+    this.combatResolver = new CombatResolver(
+      data.enemies,
+      data.defenses,
+      this.resourceManager,
+      data.tuning.enemySpeedScale ?? 1,
+    );
     this.breachController = new BreachController(data.waves, data.tuning);
 
     this.resourceManager.tick(this.state, this.tuning);

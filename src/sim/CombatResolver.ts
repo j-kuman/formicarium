@@ -8,6 +8,7 @@ export class CombatResolver {
     private readonly enemies: EnemyData[],
     private readonly defenses: DefenseData[],
     private readonly resourceManager = new ResourceManager(),
+    private readonly speedScale = 1,
   ) {}
 
   tick(state: GameState, deltaMs: number): SimEvent[] {
@@ -26,7 +27,7 @@ export class CombatResolver {
         continue;
       }
 
-      enemy.progress += (enemy.speed * enemy.slowFactor * deltaMs) / (edge.length * 1000);
+      enemy.progress += (enemy.speed * this.speedScale * enemy.slowFactor * deltaMs) / (edge.length * 1000);
       if (enemy.progress < 1) {
         continue;
       }
