@@ -2,8 +2,10 @@
 
 **Formicarium** — a browser tower-defense game (Phaser 3 + TypeScript + Vite + Vitest). Before any task, read **`IMPLEMENTATION_PLAN.md`** (the single source of truth) and find your task's tier in the §10 "Implementer tier" table.
 
-## Per-task: report your tier first
-Before writing code, look up the task's tier in the §10 table and output one line:
+## Per-task tier — CODEX ONLY
+*(Applies only to Codex/GPT-5.5, which has a switchable reasoning-effort setting. The ChatGPT connector lane runs at High throughout and ignores this section — skip it.)*
+
+Before writing code, Codex looks up the task's tier in the §10 "Implementer tier" table and outputs one line first:
 `TIER: medium (Txx) — matches current effort` **or** `TIER: high (Txx) — switch to high before this task`.
 Use the table's tier, not your own opinion. Flag any task that's clearly mis-tagged once you're into it.
 

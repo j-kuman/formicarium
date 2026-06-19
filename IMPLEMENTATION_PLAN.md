@@ -1001,8 +1001,10 @@ export type InputCommand =
 
 **Each task = one logical commit. Verify before starting the next.**
 
-### Implementer tier (GPT-5.5 reasoning effort per task)
-`high` = residual ambiguity, cross-file/refactor scope, stateful/sequenced logic, judgment/balance, **or** high blast radius (a subtle error propagates — shared types, core state, orchestration, seam/invariant-setting code). `medium` = well-specified, low-blast, mostly single-file execution. Default to `high` when uncertain. The implementer reads this table and tells you when to switch effort (it does not decide on its own).
+### Implementer tier — CODEX ONLY (GPT-5.5 reasoning effort per task)
+*This table applies only to the **Codex** lane (GPT-5.5, which has a switchable reasoning-effort setting). The **ChatGPT connector lane runs at 5.5 High throughout and ignores this table** — if ChatGPT ever falls back to 5.4 under rate limits, pause that lane rather than implement invariant-heavy work with the weaker model.*
+
+`high` = residual ambiguity, cross-file/refactor scope, stateful/sequenced logic, judgment/balance, **or** high blast radius (a subtle error propagates — shared types, core state, orchestration, seam/invariant-setting code). `medium` = well-specified, low-blast, mostly single-file execution. Default to `high` when uncertain. Codex reads this table and tells you when to switch effort (it does not decide on its own).
 
 | Task | Tier | Why |
 |---|---|---|
