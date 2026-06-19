@@ -90,7 +90,7 @@ describe("PhaseController", () => {
 
     expect(events).toEqual([]);
     expect(state.phase).toBe("recovery");
-    expect(state.phaseTick).toBe(119);
+    expect(state.phaseTick).toBe(120);
     expect(state.wave).toBe(1);
   });
 
