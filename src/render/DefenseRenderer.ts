@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 
+import type { CommandQueue } from "../input/CommandQueue";
 import type { DefenseData } from "../types/data";
-import type { DefenseInstance, GameState } from "../types/game";
+import type { DefenseInstance, EdgeState, GameState, NodeState } from "../types/game";
 import { getEdgeMidpoint, getPointOnStateEdge } from "./edgeGeometry";
 
 interface DefenseView {
@@ -17,6 +18,7 @@ export class DefenseRenderer {
   constructor(
     private readonly scene: Phaser.Scene,
     defenseData: DefenseData[],
+    private readonly commandQueue: CommandQueue,
   ) {
     this.defenseDataById = new Map(defenseData.map((defense) => [defense.id, defense]));
     this.slotGraphics = this.scene.add.graphics();
@@ -122,7 +124,17 @@ export class DefenseRenderer {
   private redrawSlotIndicators(state: Readonly<GameState>): void {
     this.slotGraphics.clear();
 
-    if (state.phase !== "build" || !state.selectedId || !state.selectedKind) {
+    if (state.phase !== "build") {
+      return;
+    }
+
+    const placementDefenseTypeId = this.commandQueue.getPlacementDefenseTypeId();
+    if (placementDefenseTypeId) {
+      this.redrawPlacementSlots(state, placementDefenseTypeId);
+      return;
+    }
+
+    if (!state.selectedId || !state.selectedKind) {
       return;
     }
 
@@ -133,12 +145,46 @@ export class DefenseRenderer {
     }
   }
 
+  private redrawPlacementSlots(state: Readonly<GameState>, defenseTypeId: string): void {
+    const defenseData = this.defenseDataById.get(defenseTypeId);
+    if (!defenseData || !this.canAfford(state, defenseData)) {
+      return;
+    }
+
+    if (defenseData.placement === "node") {
+      for (const node of state.nodes.values()) {
+        if (node.visible) {
+          this.drawNodeSlots(state, node);
+        }
+      }
+    } else {
+      for (const edge of state.edges.values()) {
+        if (edge.visible) {
+          this.drawEdgeSlots(state, edge);
+        }
+      }
+    }
+  }
+
   private redrawNodeSlots(state: Readonly<GameState>): void {
     const node = state.nodes.get(state.selectedId ?? "");
     if (!node?.visible) {
       return;
     }
 
+    this.drawNodeSlots(state, node);
+  }
+
+  private redrawEdgeSlots(state: Readonly<GameState>): void {
+    const edge = state.edges.get(state.selectedId ?? "");
+    if (!edge?.visible) {
+      return;
+    }
+
+    this.drawEdgeSlots(state, edge);
+  }
+
+  private drawNodeSlots(state: Readonly<GameState>, node: NodeState): void {
     const occupiedSlots = state.defenses.filter((defense) => defense.nodeId === node.id).length;
     const availableSlots = Math.max(0, node.defenseSlots - occupiedSlots);
 
@@ -150,12 +196,7 @@ export class DefenseRenderer {
     }
   }
 
-  private redrawEdgeSlots(state: Readonly<GameState>): void {
-    const edge = state.edges.get(state.selectedId ?? "");
-    if (!edge?.visible) {
-      return;
-    }
-
+  private drawEdgeSlots(state: Readonly<GameState>, edge: EdgeState): void {
     const occupiedSlots = state.defenses.filter((defense) => defense.edgeId === edge.id).length;
     const availableSlots = Math.max(0, edge.defenseSlots - occupiedSlots);
 
@@ -164,6 +205,12 @@ export class DefenseRenderer {
       const point = getPointOnStateEdge(state, edge.id, progress);
       this.drawSlotIndicator(point.x, point.y);
     }
+  }
+
+  private canAfford(state: Readonly<GameState>, defenseData: DefenseData): boolean {
+    return Object.entries(defenseData.cost).every(([resource, amount]) => {
+      return state.resources[resource as keyof GameState["resources"]] >= (amount ?? 0);
+    });
   }
 
   private drawSlotIndicator(x: number, y: number): void {

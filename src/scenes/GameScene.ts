@@ -26,9 +26,13 @@ export class GameScene extends Phaser.Scene {
     this.sim = window.__sim as GameSim;
     this.uiScene = this.scene.get("UIScene") as UIScene;
     this.commandQueue = this.uiScene.commandQueue;
-    this.mapRenderer = new MapRenderer(this, this.commandQueue);
+    this.mapRenderer = new MapRenderer(this, this.commandQueue, this.cache.json.get("defenses") as DefenseData[]);
     this.enemyRenderer = new EnemyRenderer(this, this.cache.json.get("enemies") as EnemyData[]);
-    this.defenseRenderer = new DefenseRenderer(this, this.cache.json.get("defenses") as DefenseData[]);
+    this.defenseRenderer = new DefenseRenderer(
+      this,
+      this.cache.json.get("defenses") as DefenseData[],
+      this.commandQueue,
+    );
     this.effectRenderer = new EffectRenderer(
       this,
       this.cache.json.get("tuning") as TuningData,

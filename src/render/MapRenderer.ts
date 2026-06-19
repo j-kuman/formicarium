@@ -1,8 +1,9 @@
 import Phaser from "phaser";
 
 import type { CommandQueue } from "../input/CommandQueue";
+import type { DefenseData } from "../types/data";
 import type { GameState, NodeState } from "../types/game";
-import { getPointOnEdge } from "./edgeGeometry";
+import { getEdgeMidpoint, getPointOnEdge } from "./edgeGeometry";
 
 interface NodeView {
   container: Phaser.GameObjects.Container;
@@ -25,16 +26,29 @@ const NODE_TEXTURES: Record<NodeState["type"], string> = {
 
 export class MapRenderer {
   private readonly edgeGraphics: Phaser.GameObjects.Graphics;
+  private readonly defenseDataById: Map<string, DefenseData>;
   private readonly nodeViews = new Map<string, NodeView>();
+  private readonly edgeHitZones = new Map<string, Phaser.GameObjects.Zone>();
+  private currentState: Readonly<GameState> | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly commandQueue: CommandQueue,
+    defenseData: DefenseData[],
   ) {
+    this.defenseDataById = new Map(defenseData.map((defense) => [defense.id, defense]));
     this.edgeGraphics = this.scene.add.graphics();
   }
 
   init(state: Readonly<GameState>): void {
+    for (const edge of state.edges.values()) {
+      const zone = this.scene.add.zone(0, 0, 96, 44).setInteractive({ useHandCursor: true });
+      zone.on("pointerdown", () => {
+        this.handleEdgeClick(edge.id);
+      });
+      this.edgeHitZones.set(edge.id, zone);
+    }
+
     for (const node of state.nodes.values()) {
       const container = this.scene.add.container(node.x, node.y);
       const sprite = this.scene.add.image(0, 0, NODE_TEXTURES[node.type]);
@@ -43,7 +57,7 @@ export class MapRenderer {
 
       sprite.setInteractive({ useHandCursor: true });
       sprite.on("pointerdown", () => {
-        this.commandQueue.push({ type: "select_node", nodeId: node.id });
+        this.handleNodeClick(node.id);
       });
 
       container.add([selection, sprite, hpBar]);
@@ -54,7 +68,9 @@ export class MapRenderer {
   }
 
   update(state: Readonly<GameState>): void {
+    this.currentState = state;
     this.redrawEdges(state);
+    this.updateEdgeHitZones(state);
 
     for (const node of state.nodes.values()) {
       const view = this.nodeViews.get(node.id);
@@ -62,13 +78,68 @@ export class MapRenderer {
         continue;
       }
 
-      view.container.setPosition(node.x, node.y);
-      view.container.setAlpha(node.visible ? 1 : 0);
-      view.container.setVisible(node.visible);
-      view.sprite.setTint(node.contaminated ? 0x8ee05f : 0xffffff);
-      this.redrawHpBar(view.hpBar, node);
-      this.redrawSelection(view.selection, node, state);
+      this.applyNodeState(view, node, state);
     }
+  }
+
+  private applyNodeState(view: NodeView, node: NodeState, state: Readonly<GameState>): void {
+    view.container.setPosition(node.x, node.y);
+    view.container.setAlpha(node.visible ? 1 : 0);
+    view.container.setVisible(node.visible);
+    view.sprite.setTint(node.contaminated ? 0x8ee05f : 0xffffff);
+    this.redrawHpBar(view.hpBar, node);
+    this.redrawSelection(view.selection, node, state);
+  }
+
+  private handleNodeClick(nodeId: string): void {
+    if (this.tryPlaceDefense("node", nodeId)) {
+      return;
+    }
+
+    this.commandQueue.push({ type: "select_node", nodeId });
+  }
+
+  private handleEdgeClick(edgeId: string): void {
+    if (this.tryPlaceDefense("edge", edgeId)) {
+      return;
+    }
+
+    this.commandQueue.push({ type: "select_edge", edgeId });
+  }
+
+  private tryPlaceDefense(kind: "node" | "edge", id: string): boolean {
+    const defenseTypeId = this.commandQueue.getPlacementDefenseTypeId();
+    const state = this.currentState;
+    if (!defenseTypeId || !state) {
+      return false;
+    }
+
+    const defenseData = this.defenseDataById.get(defenseTypeId);
+    if (!defenseData || defenseData.placement !== kind || !this.hasAvailableSlot(state, kind, id)) {
+      return true;
+    }
+
+    if (kind === "node") {
+      this.commandQueue.push({ type: "place_defense", defenseTypeId, nodeId: id });
+    } else {
+      this.commandQueue.push({ type: "place_defense", defenseTypeId, edgeId: id });
+    }
+
+    this.commandQueue.finishPlacement();
+    this.scene.game.canvas.style.cursor = "default";
+    return true;
+  }
+
+  private hasAvailableSlot(state: Readonly<GameState>, kind: "node" | "edge", id: string): boolean {
+    if (kind === "node") {
+      const node = state.nodes.get(id);
+      const occupiedSlots = state.defenses.filter((defense) => defense.nodeId === id).length;
+      return Boolean(node?.visible && occupiedSlots < node.defenseSlots);
+    }
+
+    const edge = state.edges.get(id);
+    const occupiedSlots = state.defenses.filter((defense) => defense.edgeId === id).length;
+    return Boolean(edge?.visible && occupiedSlots < edge.defenseSlots);
   }
 
   private redrawEdges(state: Readonly<GameState>): void {
@@ -91,6 +162,23 @@ export class MapRenderer {
         this.edgeGraphics.lineTo(point.x, point.y);
       }
       this.edgeGraphics.strokePath();
+    }
+  }
+
+  private updateEdgeHitZones(state: Readonly<GameState>): void {
+    for (const edge of state.edges.values()) {
+      const zone = this.edgeHitZones.get(edge.id);
+      if (!zone) {
+        continue;
+      }
+
+      const midpoint = getEdgeMidpoint(state, edge.id);
+      zone.setPosition(midpoint.x, midpoint.y);
+      zone.setActive(edge.visible);
+      zone.setVisible(edge.visible);
+      if (zone.input) {
+        zone.input.enabled = edge.visible;
+      }
     }
   }
 

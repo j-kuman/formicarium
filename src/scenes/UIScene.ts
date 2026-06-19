@@ -13,11 +13,15 @@ import type {
 } from "../types/data";
 import type { SimEvent } from "../types/events";
 import type { GameState } from "../types/game";
+import { BuildPanel } from "../ui/BuildPanel";
 import { HUD } from "../ui/HUD";
+import { SelectionPanel } from "../ui/SelectionPanel";
 
 export class UIScene extends Phaser.Scene {
   public readonly commandQueue = new CommandQueue();
   private hud: HUD | null = null;
+  private buildPanel: BuildPanel | null = null;
+  private selectionPanel: SelectionPanel | null = null;
 
   constructor() {
     super("UIScene");
@@ -30,14 +34,25 @@ export class UIScene extends Phaser.Scene {
       () => this.commandQueue.push({ type: "advance_phase" }),
       () => this.resetGame(),
     );
+    this.buildPanel = new BuildPanel(this, this.commandQueue, this.cache.json.get("defenses") as DefenseData[]);
+    this.selectionPanel = new SelectionPanel(
+      this,
+      this.commandQueue,
+      this.cache.json.get("defenses") as DefenseData[],
+      this.cache.json.get("chambers") as ChamberData[],
+    );
   }
 
   sync(state: Readonly<GameState>, events: SimEvent[]): void {
     this.hud?.sync(state, events);
+    this.buildPanel?.sync(state);
+    this.selectionPanel?.sync(state);
   }
 
   private resetGame(): void {
     this.commandQueue.flush();
+    this.commandQueue.finishPlacement();
+    this.game.canvas.style.cursor = "default";
     window.__sim = new GameSim({
       tuning: this.cache.json.get("tuning") as TuningData,
       map: this.cache.json.get("map") as MapData,
