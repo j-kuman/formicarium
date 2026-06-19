@@ -188,6 +188,122 @@ describe("CombatResolver", () => {
     expect(state.gameOver).toBe(true);
     expect(events.map((event) => event.type)).toContain("GAME_OVER");
   });
+it("enemySpeedScale scales movement progress", () => {
+  const normalSpeed = gameState({ enemies: [enemy({ speed: 1 })] });
+  const doubleSpeed = gameState({ enemies: [enemy({ speed: 1 })] });
+
+  new CombatResolver(enemyData, defenseData, new ResourceManager(), 1).tick(normalSpeed, 1000);
+  new CombatResolver(enemyData, defenseData, new ResourceManager(), 2).tick(doubleSpeed, 1000);
+
+  expect(normalSpeed.enemies[0]?.progress).toBeCloseTo(0.01);
+  expect(doubleSpeed.enemies[0]?.progress).toBeCloseTo(0.02);
+});
+
+it("enemy with multiple pathEdges transitions on first completed edge and reaches goal on second completed edge", () => {
+  const state = gameState({
+    enemies: [enemy({ speed: 200, pathEdges: ["edge_entrance_mid", "edge_mid_queen"] })],
+  });
+
+  const firstTickEvents = resolver().tick(state, 1000);
+
+  expect(state.enemies).toHaveLength(1);
+  expect(state.enemies[0]?.edgeId).toBe("edge_mid_queen");
+  expect(state.enemies[0]?.progress).toBe(0);
+  expect(firstTickEvents.map((event) => event.type)).not.toContain("ENEMY_REACHED_GOAL");
+
+  const secondTickEvents = resolver().tick(state, 1000);
+
+  expect(state.enemies).toHaveLength(0);
+  expect(state.queenHp).toBe(195);
+  expect(secondTickEvents.map((event) => event.type)).toContain("ENEMY_REACHED_GOAL");
+});
+
+it("DoT stops dealing damage after dotTicksRemaining reaches 0", () => {
+  const state = gameState({
+    enemies: [enemy({ hp: 30, speed: 0, dotDamage: 4, dotTicksRemaining: 1 })],
+  });
+
+  resolver().tick(state, 1000);
+
+  expect(state.enemies[0]?.hp).toBe(26);
+  expect(state.enemies[0]?.dotTicksRemaining).toBe(0);
+
+  resolver().tick(state, 1000);
+
+  expect(state.enemies[0]?.hp).toBe(26);
+  expect(state.enemies[0]?.dotTicksRemaining).toBe(0);
+});
+
+it("acid_sprayer does not re-apply DoT before cooldownTicks elapse", () => {
+  const state = gameState({
+    enemies: [enemy({ hp: 30, speed: 0 })],
+    defenses: [defense({ cooldownTicksRemaining: 0, typeId: "acid_sprayer", nodeId: "junction" })],
+  });
+
+  resolver().tick(state, 1000);
+
+  expect(state.enemies[0]?.hp).toBe(22);
+  expect(state.enemies[0]?.dotTicksRemaining).toBe(2);
+  expect(state.defenses[0]?.cooldownTicksRemaining).toBe(60);
+
+  resolver().tick(state, 1000);
+
+  expect(state.enemies[0]?.hp).toBe(14);
+  expect(state.enemies[0]?.dotTicksRemaining).toBe(1);
+  expect(state.defenses[0]?.cooldownTicksRemaining).toBe(59);
+});
+
+it("resin_barricade slow is transient after enemy leaves its edge", () => {
+  const state = gameState({
+    enemies: [enemy({ edgeId: "edge_entrance_mid", speed: 0 })],
+    defenses: [defense({ typeId: "resin_barricade", edgeId: "edge_entrance_mid" })],
+  });
+
+  resolver().tick(state, 1000);
+
+  expect(state.enemies[0]?.slowFactor).toBe(0.65);
+
+  state.enemies[0]!.edgeId = "edge_mid_queen";
+
+  resolver().tick(state, 1000);
+
+  expect(state.enemies[0]?.slowFactor).toBe(1);
+});
+
+it("guard_post damages all enemies in range and resin_barricade slows all enemies on its edge", () => {
+  const state = gameState({
+    enemies: [
+      enemy({ id: "enemy_1", hp: 30, speed: 0, edgeId: "edge_entrance_mid" }),
+      enemy({ id: "enemy_2", hp: 30, speed: 0, edgeId: "edge_entrance_mid" }),
+    ],
+    defenses: [
+      defense({ id: "defense_1", typeId: "guard_post", nodeId: "junction" }),
+      defense({ id: "defense_2", typeId: "resin_barricade", edgeId: "edge_entrance_mid" }),
+    ],
+  });
+
+  resolver().tick(state, 1000);
+
+  expect(state.enemies[0]?.hp).toBe(18);
+  expect(state.enemies[1]?.hp).toBe(18);
+  expect(state.enemies[0]?.slowFactor).toBe(0.65);
+  expect(state.enemies[1]?.slowFactor).toBe(0.65);
+});
+
+it("enemy killed by acid DoT grants reward and emits ENEMY_DIED", () => {
+  const state = gameState({
+    enemies: [enemy({ hp: 8, speed: 0 })],
+    defenses: [defense({ cooldownTicksRemaining: 0, typeId: "acid_sprayer", nodeId: "junction" })],
+    resources: { food: 10, resin: 10, soil: 10 },
+  });
+
+  const events = resolver().tick(state, 1000);
+
+  expect(state.enemies).toHaveLength(0);
+  expect(state.resources.food).toBe(12);
+  expect(events.map((event) => event.type)).toContain("ENEMY_DIED");
+});
+
 });
 
 function resolver() {
