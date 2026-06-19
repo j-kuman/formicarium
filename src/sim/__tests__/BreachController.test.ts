@@ -80,6 +80,93 @@ describe("BreachController", () => {
     expect(state.claimedDeepNodes).toBe(true);
     expect(events).toContainEqual({ type: "VICTORY", tick: 0 });
   });
+
+  it("onWaveStart with no foreshadow returns no events and queues nothing", () => {
+  const state = gameState();
+  const events = controller().onWaveStart(state, 6);
+
+  expect(events).toEqual([]);
+  expect(state.foreshadowEvents).toHaveLength(0);
+});
+
+it("recognized temperature foreshadow type is passed through", () => {
+  const state = gameState();
+  const breach = new BreachController(
+    [
+      ...waves,
+      {
+        wave: 10,
+        act: 1,
+        warningTicks: 240,
+        foreshadow: "temperature",
+        foreshadowMessage: "Temperature rising in the lower tunnels.",
+        spawns: [],
+      },
+    ],
+    tuning,
+  );
+
+  const events = breach.onWaveStart(state, 10);
+
+  expect(state.foreshadowEvents[0]).toMatchObject({ type: "temperature", wave: 10 });
+  expect(events[0]).toMatchObject({ type: "FORESHADOW_EVENT", foreshadowType: "temperature" });
+});
+
+it("unrecognized foreshadow type falls back to scout_warning", () => {
+  const state = gameState();
+  const breach = new BreachController(
+    [
+      ...waves,
+      {
+        wave: 10,
+        act: 1,
+        warningTicks: 240,
+        foreshadow: "rumble",
+        foreshadowMessage: "Something is moving below.",
+        spawns: [],
+      },
+    ],
+    tuning,
+  );
+
+  const events = breach.onWaveStart(state, 10);
+
+  expect(state.foreshadowEvents[0]).toMatchObject({ type: "scout_warning", wave: 10 });
+  expect(events[0]).toMatchObject({ type: "FORESHADOW_EVENT", foreshadowType: "scout_warning" });
+});
+
+it("foreshadow event message falls back to raw foreshadow string", () => {
+  const state = gameState();
+  const breach = new BreachController(
+    [
+      ...waves,
+      {
+        wave: 10,
+        act: 1,
+        warningTicks: 240,
+        foreshadow: "temperature",
+        spawns: [],
+      },
+    ],
+    tuning,
+  );
+
+  const events = breach.onWaveStart(state, 10);
+
+  expect(state.foreshadowEvents[0]).toMatchObject({ message: "temperature" });
+  expect(events[0]).toMatchObject({ type: "FORESHADOW_EVENT", message: "temperature" });
+});
+
+it("tick before breach is a no-op while reveal delay is not active", () => {
+  const state = gameState();
+
+  const events = controller().tick(state);
+
+  expect(events).toEqual([]);
+  expect(state.nodes.get("deep_junction")?.visible).toBe(false);
+  expect(state.edges.get("deep_edge")?.visible).toBe(false);
+  expect(state.deepNodesVisible).toBe(false);
+});
 });
 
 function controller() {
