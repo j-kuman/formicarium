@@ -4,6 +4,7 @@ export type SimEventType =
   | "NODE_DAMAGED"
   | "QUEEN_HIT"
   | "DEFENSE_FIRED"
+  | "RESOURCE_INCOME"
   | "NODE_CONTAMINATED"
   | "WAVE_STARTED"
   | "WAVE_COMPLETE"

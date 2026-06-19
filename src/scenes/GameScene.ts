@@ -27,7 +27,11 @@ export class GameScene extends Phaser.Scene {
     this.uiScene = this.scene.get("UIScene") as UIScene;
     this.commandQueue = this.uiScene.commandQueue;
     this.mapRenderer = new MapRenderer(this, this.commandQueue, this.cache.json.get("defenses") as DefenseData[]);
-    this.enemyRenderer = new EnemyRenderer(this, this.cache.json.get("enemies") as EnemyData[]);
+    this.enemyRenderer = new EnemyRenderer(
+      this,
+      this.cache.json.get("enemies") as EnemyData[],
+      this.cache.json.get("tuning") as TuningData,
+    );
     this.defenseRenderer = new DefenseRenderer(
       this,
       this.cache.json.get("defenses") as DefenseData[],
@@ -53,7 +57,7 @@ export class GameScene extends Phaser.Scene {
     this.effectRenderer.process(events, state);
     this.uiScene.sync(state, events);
     this.mapRenderer.update(state);
-    this.enemyRenderer.update(state);
+    this.enemyRenderer.update(state, events);
     this.defenseRenderer.update(state);
   }
 }

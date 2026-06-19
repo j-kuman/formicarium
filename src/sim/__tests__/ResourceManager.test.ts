@@ -33,6 +33,21 @@ describe("ResourceManager", () => {
     expect(scout.resources).toEqual({ food: 10, resin: 10, soil: 10 });
   });
 
+  it("emits actual recovery income when resources tick up", () => {
+    const state = gameState({ phase: "recovery", phaseTick: 10, resources: { food: 198, resin: 9998, soil: 9998 } });
+    const manager = new ResourceManager();
+
+    const events = manager.tick(state, tuning);
+
+    expect(events).toEqual([
+      {
+        type: "RESOURCE_INCOME",
+        tick: 0,
+        payload: { resources: { food: 2, resin: 1, soil: 1 } },
+      },
+    ]);
+  });
+
   it("recovery income respects resource caps", () => {
     const state = gameState({ phase: "recovery", phaseTick: 10, resources: { food: 198, resin: 9998, soil: 9998 } });
     const manager = new ResourceManager();

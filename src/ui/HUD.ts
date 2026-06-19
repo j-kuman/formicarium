@@ -64,6 +64,7 @@ export class HUD {
     if (events.some((event) => event.type === "QUEEN_HIT")) {
       this.pulseQueenHp();
     }
+    this.showResourceIncome(events);
 
     this.readyButton.setVisible(state.phase !== "wave" && state.phase !== "ended");
     this.cliffhangerOverlay.setVisible(state.phase === "ended");
@@ -124,6 +125,48 @@ export class HUD {
       repeat: 2,
       ease: "Quad.easeOut",
       onComplete: () => this.queenHpFill.setAlpha(1),
+    });
+  }
+
+  private showResourceIncome(events: SimEvent[]): void {
+    for (const event of events) {
+      if (event.type !== "RESOURCE_INCOME") {
+        continue;
+      }
+
+      const resources = event.payload?.resources;
+      if (!resources || typeof resources !== "object") {
+        continue;
+      }
+
+      this.spawnIncomeText("food", Number((resources as Record<string, unknown>).food ?? 0), 76, 46);
+      this.spawnIncomeText("soil", Number((resources as Record<string, unknown>).soil ?? 0), 174, 46);
+      this.spawnIncomeText("resin", Number((resources as Record<string, unknown>).resin ?? 0), 278, 46);
+    }
+  }
+
+  private spawnIncomeText(_resource: keyof GameState["resources"], amount: number, x: number, y: number): void {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return;
+    }
+
+    const text = this.scene.add
+      .text(x, y, `+${Math.floor(amount)}`, {
+        color: "#a6f0a6",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "16px",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(1600);
+
+    this.scene.tweens.add({
+      targets: text,
+      y: y - 28,
+      alpha: 0,
+      duration: 850,
+      ease: "Quad.easeOut",
+      onComplete: () => text.destroy(),
     });
   }
 }

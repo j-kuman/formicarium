@@ -13,7 +13,10 @@ export class ResourceManager {
   tick(state: GameState, tuning: TuningData): SimEvent[] {
     this.ensureCaps(tuning);
     if (state.phase === "recovery" && state.phaseTick > 0 && state.phaseTick % 10 === 0) {
-      this.grant(state, tuning.recoveryIncomePer10Ticks);
+      const granted = this.grant(state, tuning.recoveryIncomePer10Ticks);
+      if (resourceKeys.some((key) => granted[key] > 0)) {
+        return [{ type: "RESOURCE_INCOME", tick: state.tick, payload: { resources: granted } }];
+      }
     }
     return [];
   }
@@ -46,11 +49,15 @@ export class ResourceManager {
     this.clamp(state);
   }
 
-  grant(state: GameState, reward: Partial<Record<keyof Resources, number>>): void {
+  grant(state: GameState, reward: Partial<Record<keyof Resources, number>>): Resources {
+    const granted: Resources = { food: 0, soil: 0, resin: 0 };
     for (const key of resourceKeys) {
       const amount = reward[key] ?? 0;
-      state.resources[key] = Math.min(this.caps[key], state.resources[key] + amount);
+      const before = state.resources[key];
+      state.resources[key] = Math.min(this.caps[key], before + amount);
+      granted[key] = state.resources[key] - before;
     }
+    return granted;
   }
 
   private canAfford(state: GameState, cost: Partial<Record<keyof Resources, number>>): boolean {
