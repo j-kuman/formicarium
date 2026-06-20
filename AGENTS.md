@@ -36,3 +36,12 @@ Tests assert **intended** behavior, not whatever the code currently does. When a
 
 ## Coordination (parallel lanes)
 A separate tooling/QA lane commits in parallel — additional unit tests plus isolated files under `scripts/` and `docs/`. Expect commits and files you did NOT create; that's normal, not corruption. **`git pull` before you push.** Do not modify or depend on `scripts/` or `docs/` — they're not your tasks and never touch `src/`. Work on a branch + PR; never commit directly to a protected `main`.
+
+## Escalation & handoff
+You fix most failures yourself: write → run (CI or local) → read logs → fix → repeat. But at the seams where the orchestrator is irreplaceable, **STOP and hand off via `HANDOFF.md`** instead of thrashing or papering over the problem. Escalate when:
+- **Non-obvious failure** — the error doesn't localize the cause; resolving it needs live state inspection / interactive debugging, not another blind guess.
+- **N-strikes** — ~3 CI iterations on the *same* failure with no convergence (catches thrashing you won't self-detect).
+- **Conform-to-observed trap** — a test failure whose only fix is to change the expectation to match the code's *observed* behavior (see "Test integrity"). That's a code-vs-test judgment call → escalate, don't conform.
+- **Cross-lane blocker** — you need a change in a file another lane owns (e.g. a `src/` fix surfaced by a test-only task).
+
+**How:** fill the **Active handoff** block in `HANDOFF.md` per its template — transfer *state* (what you tried and why each attempt failed + your current hypothesis), not just "it's broken" — commit it on your branch, and stop. The orchestrator resolves it, pushes the fix, records the outcome in the escalation log, and clears the block; then you pull and continue. Bias toward self-debug — escalation is the exception, or it floods the metered lane and defeats the point.
