@@ -343,11 +343,17 @@ it("pheromone leech reaching a node temporarily forces nearby squads to retreat"
     squads: [squad({ assignedNodeId: "junction", stance: "hold" })],
   });
 
-  squadResolver().tick(state, 1000);
+  const events = squadResolver().tick(state, 1000);
 
   expect(state.squads[0]?.stance).toBe("retreat");
   expect(state.squads[0]?.previousStance).toBe("hold");
   expect(state.squads[0]?.panicTicksRemaining).toBe(100);
+  expect(events).toContainEqual(
+    expect.objectContaining({
+      type: "SQUAD_PANICKED",
+      payload: expect.objectContaining({ squadId: "squad_1", source: "panic_nearby_squads" }),
+    }),
+  );
 });
 
 });

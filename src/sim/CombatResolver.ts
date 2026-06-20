@@ -229,7 +229,7 @@ export class CombatResolver {
       }
 
       if (this.enemyData(enemy)?.onReach === "panic_nearby_squads") {
-        this.panicNearbySquads(state, targetNode.id);
+        this.panicNearbySquads(state, targetNode.id, events);
       }
     }
 
@@ -267,7 +267,7 @@ export class CombatResolver {
     return Boolean(squad.assignedNodeId && this.enemyInNodeRange(state, enemy, squad.assignedNodeId));
   }
 
-  private panicNearbySquads(state: GameState, nodeId: string): void {
+  private panicNearbySquads(state: GameState, nodeId: string, events: SimEvent[]): void {
     if (!this.tuning) {
       return;
     }
@@ -280,6 +280,12 @@ export class CombatResolver {
       squad.previousStance ??= squad.stance;
       squad.stance = "retreat";
       squad.panicTicksRemaining = this.tuning.squadPanicRetreatTicks;
+      events.push({
+        type: "SQUAD_PANICKED",
+        tick: state.tick,
+        nodeId,
+        payload: { squadId: squad.id, unitTypeId: squad.typeId, source: "panic_nearby_squads" },
+      });
     }
   }
 
