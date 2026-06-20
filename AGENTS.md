@@ -35,7 +35,16 @@ Tests assert **intended** behavior, not whatever the code currently does. When a
 - Never weaken/delete a test, loosen an assertion, or edit CI/workflow config just to reach green. A red test catching a real bug is doing its job. **Reaching green by conforming to a bug is a defect, not a fix.**
 
 ## Coordination (parallel lanes)
-A separate tooling/QA lane commits in parallel — additional unit tests plus isolated files under `scripts/` and `docs/`. Expect commits and files you did NOT create; that's normal, not corruption. **`git pull` before you push.** Do not modify or depend on `scripts/` or `docs/` — they're not your tasks and never touch `src/`. Work on a branch + PR; never commit directly to a protected `main`.
+A separate tooling/QA lane commits in parallel — additional unit tests plus isolated files under `scripts/` and `docs/`. Expect commits and files you did NOT create; that's normal, not corruption. Do not modify or depend on `scripts/` or `docs/` — they're not your tasks and never touch `src/`. (Git mechanics below.)
+
+## Git hygiene (shared repo)
+Codex and the local orchestrator (Claude) share the **same local working tree**; ChatGPT works remotely on GitHub. That shared tree is the sharp edge — these rules keep lanes from clobbering each other:
+- **Branch + PR for everything; never commit to `main` directly.** `main` moves under you (other lanes, merges), so a direct push gets rejected non-fast-forward anyway. Integrate through PRs with CI as the shared gate.
+- **`git pull --rebase` before you start and before you push.** Never assume local `main` is current.
+- **Don't leave the working tree dirty when you yield it.** Commit to your branch (or `git stash`) before the other local lane runs git operations — uncommitted changes block its rebase/pull.
+- **Stage explicit paths — never `git add -A` / `git add .`** when the tree may hold another lane's uncommitted work, or you'll sweep their half-done changes into your commit. Sanity-check with `git show --stat HEAD` after committing.
+- **One branch = one unit of work by one lane;** don't co-mingle two lanes on a branch. **Never force-push or rewrite history** on a shared branch or `main`.
+- **Need a file another lane is mid-editing?** Don't reach into it — hand off (`HANDOFF.md`, cross-lane-blocker trigger).
 
 ## Escalation & handoff
 You fix most failures yourself: write → run (CI or local) → read logs → fix → repeat. But at the seams where the orchestrator is irreplaceable, **STOP and hand off via `HANDOFF.md`** instead of thrashing or papering over the problem. Escalate when:
