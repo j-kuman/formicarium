@@ -28,6 +28,43 @@ describe("PhaseController", () => {
     expect(state.phase).toBe("wave");
   });
 
+  it("build advances to wave automatically after buildPhaseDurationTicks", () => {
+    const state = gameState({ phase: "build", phaseTick: tuning.buildPhaseDurationTicks - 1 });
+    const events = tick(state);
+
+    expect(state.phase).toBe("wave");
+    expect(events[0]).toMatchObject({
+      type: "PHASE_TRANSITION",
+      fromPhase: "build",
+      toPhase: "wave",
+      wave: 1,
+    });
+  });
+
+  it("phaseTick increments on non-transition ticks and resets to 0 on transition", () => {
+    const nonTransitionState = gameState({ phase: "scout", phaseTick: 10 });
+    const nonTransitionEvents = tick(nonTransitionState);
+
+    expect(nonTransitionEvents).toEqual([]);
+    expect(nonTransitionState.phase).toBe("scout");
+    expect(nonTransitionState.phaseTick).toBe(11);
+
+    const transitionState = gameState({ phase: "scout", phaseTick: 299 });
+    tick(transitionState);
+
+    expect(transitionState.phase).toBe("build");
+    expect(transitionState.phaseTick).toBe(0);
+  });
+
+  it("ended is terminal", () => {
+    const state = gameState({ phase: "ended", phaseTick: 17, wave: 2, waveEnemiesRemaining: 0 });
+    const before = { ...state };
+    const events = tick(state, [{ type: "advance_phase" }]);
+
+    expect(events).toEqual([]);
+    expect(state).toEqual(before);
+  });
+
   it("wave advances to recovery when waveEnemiesRemaining reaches 0", () => {
     const state = gameState({ phase: "wave", waveEnemiesRemaining: 0 });
     tick(state);
@@ -40,6 +77,21 @@ describe("PhaseController", () => {
     tick(state);
 
     expect(state.phase).toBe("scout");
+  });
+
+  it("recovery holds while breach is triggered but deep nodes are not visible", () => {
+    const state = gameState({
+      phase: "recovery",
+      phaseTick: tuning.recoveryPhaseDurationTicks - 1,
+      wave: 1,
+      breachTriggered: true,
+      deepNodesVisible: false,
+    });
+    const events = tick(state);
+
+    expect(events).toEqual([]);
+    expect(state.phase).toBe("recovery");
+    expect(state.wave).toBe(1);
   });
 
   it("recovery advances to ended after recoveryPhaseDurationTicks when no next wave exists", () => {
