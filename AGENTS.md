@@ -28,5 +28,11 @@ Production art ships with Phase 1 (the fakeout needs Act 1 to look polished), bu
 ## Verification
 Every change must keep `npm test`, `npm run typecheck`, and `npm run build` green — CI runs all three on push/PR. Tests use Vitest with inline fixtures; match the existing test conventions.
 
+## Test integrity — green is not the goal, *correct* is
+Tests assert **intended** behavior, not whatever the code currently does. When a test fails:
+- If your test had a genuinely wrong expectation, fix the test.
+- **But if the only way to make it pass is to change the expected value to match the code's *observed* behavior — STOP.** That is a code-vs-test judgment call, and silently conforming the test enshrines a bug: a green test that *defends* incorrect behavior, and that will later fail when someone fixes the bug. Flag it instead, e.g.: *"test expected 119 but the code produces 120; the module assigns 119 then `tick()` overwrites it — looks like a dead write. Confirm intent before I change anything."*
+- Never weaken/delete a test, loosen an assertion, or edit CI/workflow config just to reach green. A red test catching a real bug is doing its job. **Reaching green by conforming to a bug is a defect, not a fix.**
+
 ## Coordination (parallel lanes)
 A separate tooling/QA lane commits in parallel — additional unit tests plus isolated files under `scripts/` and `docs/`. Expect commits and files you did NOT create; that's normal, not corruption. **`git pull` before you push.** Do not modify or depend on `scripts/` or `docs/` — they're not your tasks and never touch `src/`. Work on a branch + PR; never commit directly to a protected `main`.
