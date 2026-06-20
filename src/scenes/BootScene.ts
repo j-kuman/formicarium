@@ -36,6 +36,10 @@ export class BootScene extends Phaser.Scene {
     this.load.json("waves", "waves.json");
     this.load.json("adaptations", "adaptations.json");
     this.load.json("map", "maps/act1_map.json");
+
+    for (const asset of SURFACE_SVG_TEXTURES) {
+      this.load.svg(asset.key, asset.url, { width: asset.width, height: asset.height });
+    }
   }
 
   create(): void {
@@ -56,19 +60,8 @@ export class BootScene extends Phaser.Scene {
   }
 
   private createTextures(): void {
-    this.circleTexture("node_queen", 40, 0xf2c94c);
-    this.circleTexture("node_brood", 35, 0xf2994a);
-    this.circleTexture("node_food", 35, 0x27ae60);
-    this.circleTexture("node_barracks", 35, 0xeb5757);
-    this.circleTexture("node_junction", 28, 0x828282);
     this.circleTexture("node_deep", 28, 0x9b51e0);
-    this.circleTexture("node_entrance", 20, 0xf2f2f2);
-    this.triangleTexture("enemy_surface", 20, 0xeb5757);
     this.triangleTexture("enemy_deep", 20, 0x9b51e0);
-    this.diamondTexture("enemy_boss", 40, 0xeb5757);
-    this.rectangleTexture("defense_barricade", 30, 8, 0x2f80ed);
-    this.circleTexture("defense_acid", 10, 0x27ae60);
-    this.rectangleTexture("defense_guard", 20, 20, 0xf2f2f2);
     this.circleTexture("unit_worker", 9, 0x6fcf97);
     this.triangleTexture("unit_soldier", 18, 0xf2994a);
     this.diamondTexture("unit_major_ant", 20, 0xeb5757);
@@ -112,14 +105,6 @@ export class BootScene extends Phaser.Scene {
     graphics.destroy();
   }
 
-  private rectangleTexture(key: string, width: number, height: number, color: number): void {
-    const graphics = this.make.graphics({ x: 0, y: 0 }, false);
-    graphics.fillStyle(color);
-    graphics.fillRect(0, 0, width, height);
-    graphics.generateTexture(key, width, height);
-    graphics.destroy();
-  }
-
   private ringTexture(key: string, radius: number, color: number): void {
     const graphics = this.make.graphics({ x: 0, y: 0 }, false);
     graphics.lineStyle(4, color, 1);
@@ -130,3 +115,72 @@ export class BootScene extends Phaser.Scene {
     graphics.destroy();
   }
 }
+
+const SURFACE_SVG_TEXTURES = [
+  {
+    key: "node_queen",
+    url: new URL("../../assets/textures/node_queen.svg", import.meta.url).href,
+    width: 80,
+    height: 80,
+  },
+  {
+    key: "node_brood",
+    url: new URL("../../assets/textures/node_brood.svg", import.meta.url).href,
+    width: 70,
+    height: 70,
+  },
+  {
+    key: "node_food",
+    url: new URL("../../assets/textures/node_food.svg", import.meta.url).href,
+    width: 70,
+    height: 70,
+  },
+  {
+    key: "node_barracks",
+    url: new URL("../../assets/textures/node_barracks.svg", import.meta.url).href,
+    width: 70,
+    height: 70,
+  },
+  {
+    key: "node_junction",
+    url: new URL("../../assets/textures/node_junction.svg", import.meta.url).href,
+    width: 56,
+    height: 56,
+  },
+  {
+    key: "node_entrance",
+    url: new URL("../../assets/textures/node_entrance.svg", import.meta.url).href,
+    width: 40,
+    height: 40,
+  },
+  {
+    key: "enemy_surface",
+    url: new URL("../../assets/textures/enemy_surface.svg", import.meta.url).href,
+    width: 20,
+    height: 20,
+  },
+  {
+    key: "enemy_boss",
+    url: new URL("../../assets/textures/enemy_boss.svg", import.meta.url).href,
+    width: 40,
+    height: 40,
+  },
+  {
+    key: "defense_barricade",
+    url: new URL("../../assets/textures/defense_barricade.svg", import.meta.url).href,
+    width: 30,
+    height: 8,
+  },
+  {
+    key: "defense_acid",
+    url: new URL("../../assets/textures/defense_acid.svg", import.meta.url).href,
+    width: 20,
+    height: 20,
+  },
+  {
+    key: "defense_guard",
+    url: new URL("../../assets/textures/defense_guard.svg", import.meta.url).href,
+    width: 20,
+    height: 20,
+  },
+] as const;
