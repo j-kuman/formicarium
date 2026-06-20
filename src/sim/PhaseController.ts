@@ -15,6 +15,11 @@ export class PhaseController {
     const elapsedTicks = state.phaseTick + 1;
     const transition = this.nextPhase(state, advanceRequested, elapsedTicks, tuning);
 
+    if (transition === "hold") {
+      state.phaseTick = tuning.recoveryPhaseDurationTicks - 1;
+      return [];
+    }
+
     if (!transition) {
       state.phaseTick = elapsedTicks;
       return [];
@@ -35,7 +40,7 @@ export class PhaseController {
     advanceRequested: boolean,
     elapsedTicks: number,
     tuning: TuningData,
-  ): { toPhase: Phase; incrementWave: boolean } | null {
+  ): { toPhase: Phase; incrementWave: boolean } | "hold" | null {
     if (state.phase === "scout") {
       const warningTicks = this.currentWave(state.wave)?.warningTicks ?? 0;
       if (advanceRequested || elapsedTicks >= warningTicks) {
@@ -60,8 +65,7 @@ export class PhaseController {
 
     if (state.phase === "recovery" && elapsedTicks >= tuning.recoveryPhaseDurationTicks) {
       if (state.breachTriggered && !state.deepNodesVisible) {
-        state.phaseTick = tuning.recoveryPhaseDurationTicks - 1;
-        return null;
+        return "hold";
       }
 
       const nextWaveNumber = state.wave + 1;

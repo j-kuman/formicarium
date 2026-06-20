@@ -92,6 +92,14 @@ describe("PhaseController", () => {
     expect(events).toEqual([]);
     expect(state.phase).toBe("recovery");
     expect(state.wave).toBe(1);
+    expect(state.phaseTick).toBe(tuning.recoveryPhaseDurationTicks - 1);
+
+    const secondHeldEvents = tick(state);
+
+    expect(secondHeldEvents).toEqual([]);
+    expect(state.phase).toBe("recovery");
+    expect(state.wave).toBe(1);
+    expect(state.phaseTick).toBe(tuning.recoveryPhaseDurationTicks - 1);
   });
 
   it("recovery advances to ended after recoveryPhaseDurationTicks when no next wave exists", () => {
