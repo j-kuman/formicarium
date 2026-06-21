@@ -35,6 +35,7 @@ const browser = await chromium.launch({
   ],
 });
 const page = await browser.newPage();
+await page.setViewportSize({ width: 1200, height: 900 });
 
 page.on('console', (msg) => {
   if (msg.type() === 'error' || msg.text().includes('[sim]') || msg.text().includes('slow')) {
@@ -74,7 +75,9 @@ let prevWave = -1;
 let snapCount = 0;
 
 while (Date.now() < deadline) {
-  const snap = await page.evaluate(() => {
+  let snap;
+  try {
+    snap = await page.evaluate(() => {
     const sim = window.__sim;
     if (!sim) return null;
     const s = sim.getState();
@@ -98,7 +101,14 @@ while (Date.now() < deadline) {
         hp: Math.round(e.hp * 10) / 10,
       })),
     };
-  });
+    });
+  } catch (err) {
+    if (err.message?.includes('closed')) {
+      process.stdout.write('\nBrowser closed — watcher exiting.\n');
+      break;
+    }
+    throw err;
+  }
 
   if (!snap) {
     await new Promise((r) => setTimeout(r, POLL_MS));
