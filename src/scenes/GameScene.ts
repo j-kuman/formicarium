@@ -78,6 +78,7 @@ export class GameScene extends Phaser.Scene {
 
   private cancelPlacement(): void {
     this.commandQueue.finishPlacement();
+    this.commandQueue.push({ type: "deselect" });
     this.game.canvas.style.cursor = "default";
   }
 }

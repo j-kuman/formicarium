@@ -76,6 +76,7 @@ export class UIScene extends Phaser.Scene {
     this.commandQueue.flush();
     this.commandQueue.finishPlacement();
     this.game.canvas.style.cursor = "default";
+    (this.scene.get("GameScene") as Phaser.Scene).cameras.main.setScroll(0, 0);
     window.__sim = new GameSim({
       tuning: this.cache.json.get("tuning") as TuningData,
       map: this.cache.json.get("map") as MapData,
@@ -99,6 +100,7 @@ export class UIScene extends Phaser.Scene {
 
   private cancelPlacement(): void {
     this.commandQueue.finishPlacement();
+    this.commandQueue.push({ type: "deselect" });
     this.game.canvas.style.cursor = "default";
   }
 }

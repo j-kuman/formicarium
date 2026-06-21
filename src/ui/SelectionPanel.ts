@@ -10,6 +10,7 @@ export class SelectionPanel {
   private readonly chamberDataById: Map<string, ChamberData>;
   private readonly unitDataById: Map<string, UnitData>;
   private lastRenderKey: string | null = null;
+  private background: Phaser.GameObjects.Rectangle | null = null;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -97,10 +98,11 @@ export class SelectionPanel {
       state,
       rowY,
     );
-    this.renderSquadRows(
+    const endY = this.renderSquadRows(
       state.squads.filter((squad) => squad.assignedNodeId === node.id),
       nextY + 16,
     );
+    this.resizePanelBackground(endY);
   }
 
   private renderEdgeSelection(state: Readonly<GameState>): void {
@@ -117,10 +119,11 @@ export class SelectionPanel {
       state,
       112,
     );
-    this.renderSquadRows(
+    const endY = this.renderSquadRows(
       state.squads.filter((squad) => squad.assignedEdgeId === edge.id),
       nextY + 16,
     );
+    this.resizePanelBackground(endY);
   }
 
   private renderDefenseRows(defenses: DefenseInstance[], state: Readonly<GameState>, startY: number): number {
@@ -144,11 +147,11 @@ export class SelectionPanel {
     return startY + defenses.length * 48;
   }
 
-  private renderSquadRows(squads: SquadInstance[], startY: number): void {
+  private renderSquadRows(squads: SquadInstance[], startY: number): number {
     this.addText(18, startY, "Squads", 14, "#ffffff");
     if (squads.length === 0) {
       this.addText(18, startY + 24, "No squads assigned", 13, "#bdbdbd");
-      return;
+      return startY + 50;
     }
 
     squads.forEach((squad, index) => {
@@ -158,6 +161,8 @@ export class SelectionPanel {
       this.addText(18, rowY + 20, `${squad.stance} | HP ${Math.ceil(squad.hp)} / ${squad.maxHp}`, 12, "#bdbdbd");
       this.renderStanceButtons(squad, rowY + 42);
     });
+
+    return startY + 26 + squads.length * 78;
   }
 
   private renderStanceButtons(squad: SquadInstance, y: number): void {
@@ -173,11 +178,15 @@ export class SelectionPanel {
   }
 
   private addPanelBackground(): void {
-    const background = this.scene.add
-      .rectangle(0, 0, 304, 470, 0x120f0d, 0.9)
+    this.background = this.scene.add
+      .rectangle(0, 0, 304, 240, 0x120f0d, 0.9)
       .setOrigin(0, 0)
       .setStrokeStyle(2, 0x4f4a45, 0.9);
-    this.container.add(background);
+    this.container.add(this.background);
+  }
+
+  private resizePanelBackground(contentEndY: number): void {
+    this.background?.setSize(304, Math.max(240, contentEndY + 24));
   }
 
   private addText(x: number, y: number, text: string, fontSize: number, color = "#f2f2f2"): void {
