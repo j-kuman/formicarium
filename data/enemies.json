@@ -23,7 +23,7 @@
   {
     "id": "beetle_tank",
     "name": "Beetle Tank",
-    "hp": 60,
+    "hp": 80,
     "attack": 20,
     "speed": 0.5,
     "armor": 5,
