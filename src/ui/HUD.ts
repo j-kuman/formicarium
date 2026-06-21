@@ -110,6 +110,16 @@ export class HUD {
     this.cliffhangerOverlay.setVisible(state.phase === "ended");
   }
 
+  expandForBreach(): void {
+    this.buildPromptText.setPosition(24, 910);
+    this.readyButton.setPosition(1050, 1042);
+  }
+
+  resetToPreBreach(): void {
+    this.buildPromptText.setPosition(24, 680);
+    this.readyButton.setPosition(1050, 828);
+  }
+
   private createButton(x: number, y: number, label: string, onClick: () => void): Phaser.GameObjects.Container {
     const container = this.scene.add.container(x, y).setDepth(1500);
     const background = this.scene.add

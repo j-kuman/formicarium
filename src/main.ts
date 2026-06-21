@@ -14,7 +14,7 @@ window.__game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: "game",
   width: 1200,
-  height: 1100,
+  height: 900,
   backgroundColor: "#050403",
   scene: [BootScene, GameScene, UIScene],
 });

@@ -68,6 +68,14 @@ export class BuildPanel {
     }
   }
 
+  expandForBreach(): void {
+    this.container.setPosition(24, 930);
+  }
+
+  resetToPreBreach(): void {
+    this.container.setPosition(24, 716);
+  }
+
   private createDefenseButton(defense: DefenseData, index: number): DefenseButton {
     const container = this.scene.add.container(index * 170, 0);
     const background = this.scene.add

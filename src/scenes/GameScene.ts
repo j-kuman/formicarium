@@ -46,7 +46,7 @@ export class GameScene extends Phaser.Scene {
       this.cache.json.get("map") as MapData,
     );
     this.cameras.main.setBackgroundColor("#050403");
-    this.cameras.main.setBounds(0, 0, 1200, 1100);
+    this.cameras.main.setBounds(0, 0, 1200, 900);
     this.registerPlacementCancelInput();
     this.mapRenderer.init(this.sim.getState());
   }

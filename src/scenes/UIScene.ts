@@ -26,6 +26,7 @@ export class UIScene extends Phaser.Scene {
   private selectionPanel: SelectionPanel | null = null;
   private waveAlert: WaveAlert | null = null;
   private soundManager: SoundManager | null = null;
+  private breached = false;
 
   constructor() {
     super("UIScene");
@@ -70,13 +71,36 @@ export class UIScene extends Phaser.Scene {
     this.buildPanel?.sync(state);
     this.selectionPanel?.sync(state);
     this.waveAlert?.sync(state, events);
+
+    if (!this.breached && events.some((e) => e.type === "BREACH_TRIGGERED")) {
+      this.breached = true;
+      this.expandForBreach();
+    }
+  }
+
+  private expandForBreach(): void {
+    this.game.scale.resize(1200, 1100);
+    const gameScene = this.scene.get("GameScene") as Phaser.Scene;
+    gameScene.cameras.main.setBounds(0, 0, 1200, 1100);
+    this.hud?.expandForBreach();
+    this.buildPanel?.expandForBreach();
   }
 
   private resetGame(): void {
     this.commandQueue.flush();
     this.commandQueue.finishPlacement();
     this.game.canvas.style.cursor = "default";
-    (this.scene.get("GameScene") as Phaser.Scene).cameras.main.setScroll(0, 0);
+    if (this.breached) {
+      this.breached = false;
+      this.game.scale.resize(1200, 900);
+      const gameScene = this.scene.get("GameScene") as Phaser.Scene;
+      gameScene.cameras.main.setBounds(0, 0, 1200, 900);
+      gameScene.cameras.main.setScroll(0, 0);
+      this.hud?.resetToPreBreach();
+      this.buildPanel?.resetToPreBreach();
+    } else {
+      (this.scene.get("GameScene") as Phaser.Scene).cameras.main.setScroll(0, 0);
+    }
     window.__sim = new GameSim({
       tuning: this.cache.json.get("tuning") as TuningData,
       map: this.cache.json.get("map") as MapData,
