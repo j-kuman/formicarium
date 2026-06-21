@@ -7,7 +7,9 @@
     "speed": 1.5,
     "role": "repair",
     "repairRatePerTick": 0.25,
-    "costPerUnit": { "food": 15 }
+    "costPerUnit": {
+      "food": 15
+    }
   },
   {
     "id": "soldier",
@@ -16,7 +18,9 @@
     "attack": 4,
     "speed": 1.2,
     "role": "melee",
-    "costPerUnit": { "food": 65 }
+    "costPerUnit": {
+      "food": 40
+    }
   },
   {
     "id": "major_ant",
@@ -25,7 +29,9 @@
     "attack": 6,
     "speed": 0.7,
     "role": "tank",
-    "costPerUnit": { "food": 180 },
+    "costPerUnit": {
+      "food": 180
+    },
     "requiresBarracks": true
   }
 ]
