@@ -31,7 +31,7 @@ console.log(`diag-watch | port=${PORT} duration=${DURATION_S}s headless=${HEADLE
 const browser = await chromium.launch({
   headless: HEADLESS,
   args: [
-    ...(HEADLESS ? ['--enable-unsafe-swiftshader', '--use-gl=swiftshader'] : ['--window-size=900,700']),
+    ...(HEADLESS ? ['--enable-unsafe-swiftshader', '--use-gl=swiftshader'] : ['--window-size=1280,980']),
   ],
 });
 const page = await browser.newPage();
