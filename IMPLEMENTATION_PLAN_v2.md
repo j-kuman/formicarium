@@ -1,7 +1,7 @@
 # Formicarium Implementation Plan v2
 ## ChatGPT 5.5 High + Jeff+Claude Dev Method
 
-_Last updated: 2026-06-21_
+_Last updated: 2026-06-21 (T22 signed off)_
 
 > **v2 purpose:** Routes remaining work between ChatGPT 5.5 High (GitHub connector, raises PRs) and the Jeff+Claude lane (balance passes, testing, review). Architecture, schemas, and task specs are unchanged from v1 — this document is a scheduling layer over IMPLEMENTATION_PLAN.md, not a replacement. When Codex comes back online (~2026-06-25), reconcile with §6 below.
 
@@ -16,8 +16,8 @@ _Last updated: 2026-06-21_
 - Barricade visual: red edge tint when resin_barricade active (`src/render/MapRenderer.ts`)
 - Playwright diagnostic: `scripts/diag-watch.mjs` — autonomous sim state watcher
 
-**In progress:**
-- T22 balance pass — Jeff+Claude lane, unblocked, starting this session
+**Signed off:**
+- T22 balance pass — complete 2026-06-21. Beetle armor 10→5, HP 60→80, soldier cost 65→40 food. Barricade slow confirmed via Playwright. P1 unlocked.
 
 **Parked branch (Codex worktree, do not touch):**
 - `codex/park-t23-breach-resume-wip` — early T23 work, unreviewed
