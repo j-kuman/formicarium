@@ -1,10 +1,10 @@
 // scripts/diag-watch.mjs
-// Autonomous sim state watcher. Opens a headless Chromium, loads the game, polls window.__sim.
+// Autonomous sim state watcher. Opens Chromium, loads the game, polls window.__sim.
 //
 // Usage: node scripts/diag-watch.mjs [options]
 //   --port N       dev server port (default 5173)
 //   --duration N   seconds to run (default 120)
-//   --visible      show the browser window (use if headless throttles Phaser)
+//   --headless     run without a visible window (requires GPU or SwiftShader)
 //
 // Output: live state snapshots to stdout.
 //   ✓SLOWED  = barricade slow is working
@@ -23,14 +23,16 @@ const opt = (name, fallback) => {
 
 const PORT = opt('--port', '5173');
 const DURATION_S = Number(opt('--duration', '120'));
-const HEADLESS = !flag('--visible');
+const HEADLESS = flag('--headless');
 const POLL_MS = 800;
 
 console.log(`diag-watch | port=${PORT} duration=${DURATION_S}s headless=${HEADLESS}`);
 
 const browser = await chromium.launch({
   headless: HEADLESS,
-  args: HEADLESS ? [] : ['--window-size=900,700'],
+  args: [
+    ...(HEADLESS ? ['--enable-unsafe-swiftshader', '--use-gl=swiftshader'] : ['--window-size=900,700']),
+  ],
 });
 const page = await browser.newPage();
 
