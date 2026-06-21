@@ -200,7 +200,8 @@ export class MapRenderer {
       }
 
       const lineWidth = edge.width === "large" ? 18 : 10;
-      const color = edge.contaminated ? 0x7bbf45 : 0x6b4a2b;
+      const hasBarricade = state.defenses.some((d) => d.edgeId === edge.id && d.typeId === "resin_barricade");
+      const color = edge.contaminated ? 0x7bbf45 : hasBarricade ? 0xc0392b : 0x6b4a2b;
       this.edgeGraphics.lineStyle(lineWidth, color, 0.82);
       this.edgeGraphics.beginPath();
       this.edgeGraphics.moveTo(nodeA.x, nodeA.y);
