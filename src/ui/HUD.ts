@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 
+import type { CommandQueue } from "../input/CommandQueue";
+import type { DefenseData, UnitData } from "../types/data";
 import type { SimEvent } from "../types/events";
 import type { GameState } from "../types/game";
 
@@ -8,6 +10,7 @@ export class HUD {
   private readonly phaseText: Phaser.GameObjects.Text;
   private readonly queenHpText: Phaser.GameObjects.Text;
   private readonly queenHpFill: Phaser.GameObjects.Rectangle;
+  private readonly buildPromptText: Phaser.GameObjects.Text;
   private readonly readyButton: Phaser.GameObjects.Container;
   private readonly muteText: Phaser.GameObjects.Text;
   private readonly cliffhangerOverlay: Phaser.GameObjects.Container;
@@ -15,10 +18,16 @@ export class HUD {
 
   constructor(
     private readonly scene: Phaser.Scene,
+    private readonly commandQueue: CommandQueue,
+    defenses: DefenseData[],
+    units: UnitData[],
     onReady: () => void,
     onPlayAgain: () => void,
     private readonly onMuteChange: (muted: boolean) => void,
   ) {
+    const defenseNameById = new Map(defenses.map((defense) => [defense.id, defense.name]));
+    const unitNameById = new Map(units.map((unit) => [unit.id, unit.name]));
+
     this.resourcesText = this.scene.add.text(24, 18, "", {
       color: "#f2f2f2",
       fontFamily: "Arial, sans-serif",
@@ -48,11 +57,36 @@ export class HUD {
       })
       .setOrigin(0.5);
 
+    this.buildPromptText = this.scene.add
+      .text(24, 680, "", {
+        color: "#f2f2f2",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "16px",
+        backgroundColor: "rgba(5, 4, 3, 0.72)",
+        padding: { x: 10, y: 7 },
+      })
+      .setDepth(1550)
+      .setVisible(false);
     this.readyButton = this.createButton(1050, 828, "Ready", onReady);
     const muteToggle = this.createMuteToggle(1112, 64);
     this.muteText = muteToggle.text;
     this.cliffhangerOverlay = this.createCliffhangerOverlay(onPlayAgain);
+    this.getPlacementName = () => {
+      const defenseTypeId = this.commandQueue.getPlacementDefenseTypeId();
+      if (defenseTypeId) {
+        return defenseNameById.get(defenseTypeId) ?? defenseTypeId;
+      }
+
+      const squadRequest = this.commandQueue.getPlacementSquadRequest();
+      if (squadRequest) {
+        return unitNameById.get(squadRequest.unitTypeId) ?? squadRequest.unitTypeId;
+      }
+
+      return null;
+    };
   }
+
+  private readonly getPlacementName: () => string | null;
 
   sync(state: Readonly<GameState>, events: SimEvent[]): void {
     this.resourcesText.setText(
@@ -72,6 +106,7 @@ export class HUD {
     this.showResourceIncome(events);
 
     this.readyButton.setVisible(state.phase !== "wave" && state.phase !== "ended");
+    this.syncBuildPrompt(state);
     this.cliffhangerOverlay.setVisible(state.phase === "ended");
   }
 
@@ -89,9 +124,29 @@ export class HUD {
       })
       .setOrigin(0.5);
 
-    background.on("pointerdown", onClick);
+    background.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.leftButtonDown()) {
+        onClick();
+      }
+    });
     container.add([background, text]);
     return container;
+  }
+
+  private syncBuildPrompt(state: Readonly<GameState>): void {
+    if (state.phase !== "build") {
+      this.buildPromptText.setVisible(false);
+      return;
+    }
+
+    const placementName = this.getPlacementName();
+    this.buildPromptText
+      .setText(
+        placementName
+          ? `Click a glowing slot to place ${placementName}. Right-click / Esc to cancel.`
+          : "Select a defense or unit below, then click a glowing slot.",
+      )
+      .setVisible(true);
   }
 
   private createCliffhangerOverlay(onPlayAgain: () => void): Phaser.GameObjects.Container {
@@ -133,7 +188,11 @@ export class HUD {
       })
       .setOrigin(0.5);
 
-    background.on("pointerdown", () => this.toggleMute());
+    background.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.leftButtonDown()) {
+        this.toggleMute();
+      }
+    });
     container.add([background, text]);
     return { container, text };
   }

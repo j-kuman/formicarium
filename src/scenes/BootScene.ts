@@ -38,7 +38,7 @@ export class BootScene extends Phaser.Scene {
     this.load.json("map", "maps/act1_map.json");
 
     for (const asset of SURFACE_SVG_TEXTURES) {
-      this.load.svg(asset.key, asset.url, { width: asset.width, height: asset.height });
+      this.load.svg(asset.key, this.svgLoaderUrl(asset.url), { width: asset.width, height: asset.height });
     }
   }
 
@@ -70,6 +70,17 @@ export class BootScene extends Phaser.Scene {
     this.ringTexture("squad_frame_retreat", 28, 0x56ccf2);
     this.ringTexture("squad_frame_repair", 28, 0x6fcf97);
     this.ringTexture("squad_frame_patrol", 28, 0xf2c94c);
+  }
+
+  private svgLoaderUrl(url: string): string {
+    if (!url.startsWith("data:image/svg+xml")) {
+      return url;
+    }
+
+    const commaIndex = url.indexOf(",");
+    const payload = commaIndex >= 0 ? url.slice(commaIndex + 1) : "";
+    const svgText = url.includes(";base64,") ? atob(payload) : decodeURIComponent(payload);
+    return URL.createObjectURL(new Blob([svgText], { type: "image/svg+xml" }));
   }
 
   private circleTexture(key: string, radius: number, color: number): void {

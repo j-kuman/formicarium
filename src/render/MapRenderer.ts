@@ -43,7 +43,11 @@ export class MapRenderer {
   init(state: Readonly<GameState>): void {
     for (const edge of state.edges.values()) {
       const zone = this.scene.add.zone(0, 0, 96, 44).setInteractive({ useHandCursor: true });
-      zone.on("pointerdown", () => {
+      zone.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+        if (!pointer.leftButtonDown()) {
+          return;
+        }
+
         this.handleEdgeClick(edge.id);
       });
       this.edgeHitZones.set(edge.id, zone);
@@ -56,7 +60,11 @@ export class MapRenderer {
       const selection = this.scene.add.graphics();
 
       sprite.setInteractive({ useHandCursor: true });
-      sprite.on("pointerdown", () => {
+      sprite.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+        if (!pointer.leftButtonDown()) {
+          return;
+        }
+
         this.handleNodeClick(node.id);
       });
 

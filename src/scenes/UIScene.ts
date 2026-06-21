@@ -35,6 +35,9 @@ export class UIScene extends Phaser.Scene {
     this.cameras.main.setScroll(0, 0);
     this.hud = new HUD(
       this,
+      this.commandQueue,
+      this.cache.json.get("defenses") as DefenseData[],
+      this.cache.json.get("units") as UnitData[],
       () => this.commandQueue.push({ type: "advance_phase" }),
       () => this.resetGame(),
       (muted) => this.soundManager?.setMuted(muted),
@@ -58,6 +61,7 @@ export class UIScene extends Phaser.Scene {
       this.cache.json.get("enemies") as EnemyData[],
     );
     this.soundManager = new SoundManager(this.sound);
+    this.registerPlacementCancelInput();
   }
 
   sync(state: Readonly<GameState>, events: SimEvent[]): void {
@@ -81,5 +85,20 @@ export class UIScene extends Phaser.Scene {
       chambers: this.cache.json.get("chambers") as ChamberData[],
       units: this.cache.json.get("units") as UnitData[],
     });
+  }
+
+  private registerPlacementCancelInput(): void {
+    this.input.mouse?.disableContextMenu();
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.rightButtonDown()) {
+        this.cancelPlacement();
+      }
+    });
+    this.input.keyboard?.on("keydown-ESC", () => this.cancelPlacement());
+  }
+
+  private cancelPlacement(): void {
+    this.commandQueue.finishPlacement();
+    this.game.canvas.style.cursor = "default";
   }
 }

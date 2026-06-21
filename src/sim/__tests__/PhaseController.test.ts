@@ -21,14 +21,30 @@ describe("PhaseController", () => {
     expect(state.phase).toBe("build");
   });
 
-  it("build advances to wave on advance_phase", () => {
-    const state = gameState({ phase: "build" });
-    tick(state, [{ type: "advance_phase" }]);
+  it("advance_phase transitions build to wave immediately", () => {
+    const state = gameState({ phase: "build", phaseTick: 0 });
+    const events = tick(state, [{ type: "advance_phase" }]);
 
     expect(state.phase).toBe("wave");
+    expect(state.phaseTick).toBe(0);
+    expect(events[0]).toMatchObject({
+      type: "PHASE_TRANSITION",
+      fromPhase: "build",
+      toPhase: "wave",
+      wave: 1,
+    });
   });
 
-  it("build advances to wave automatically after buildPhaseDurationTicks", () => {
+  it("build does not transition before the cap elapses without advance_phase", () => {
+    const state = gameState({ phase: "build", phaseTick: tuning.buildPhaseDurationTicks - 2 });
+    const events = tick(state);
+
+    expect(events).toEqual([]);
+    expect(state.phase).toBe("build");
+    expect(state.phaseTick).toBe(tuning.buildPhaseDurationTicks - 1);
+  });
+
+  it("build also transitions after the cap elapses", () => {
     const state = gameState({ phase: "build", phaseTick: tuning.buildPhaseDurationTicks - 1 });
     const events = tick(state);
 
