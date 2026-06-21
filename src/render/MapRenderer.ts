@@ -26,6 +26,7 @@ const NODE_TEXTURES: Record<NodeState["type"], string> = {
 
 export class MapRenderer {
   private readonly edgeGraphics: Phaser.GameObjects.Graphics;
+  private readonly crackGraphics: Phaser.GameObjects.Graphics;
   private readonly defenseDataById: Map<string, DefenseData>;
   private readonly nodeViews = new Map<string, NodeView>();
   private readonly edgeHitZones = new Map<string, Phaser.GameObjects.Zone>();
@@ -38,6 +39,7 @@ export class MapRenderer {
   ) {
     this.defenseDataById = new Map(defenseData.map((defense) => [defense.id, defense]));
     this.edgeGraphics = this.scene.add.graphics();
+    this.crackGraphics = this.scene.add.graphics();
   }
 
   init(state: Readonly<GameState>): void {
@@ -78,6 +80,7 @@ export class MapRenderer {
   update(state: Readonly<GameState>): void {
     this.currentState = state;
     this.redrawEdges(state);
+    this.redrawCrack(state);
     this.updateEdgeHitZones(state);
 
     for (const node of state.nodes.values()) {
@@ -211,6 +214,38 @@ export class MapRenderer {
       }
       this.edgeGraphics.strokePath();
     }
+  }
+
+  private redrawCrack(state: Readonly<GameState>): void {
+    this.crackGraphics.clear();
+
+    const hasCrackForeshadow = state.foreshadowEvents.some((event) => event.wave === 9 && event.type === "crack");
+    if (!hasCrackForeshadow || state.breachTriggered) {
+      return;
+    }
+
+    const queen = state.nodes.get("queen_chamber");
+    if (!queen?.visible) {
+      return;
+    }
+
+    const y = queen.y + 42;
+    this.crackGraphics.lineStyle(3, 0x120f0d, 0.92);
+    this.crackGraphics.beginPath();
+    this.crackGraphics.moveTo(queen.x - 42, y);
+    this.crackGraphics.lineTo(queen.x - 18, y + 8);
+    this.crackGraphics.lineTo(queen.x + 2, y + 2);
+    this.crackGraphics.lineTo(queen.x + 22, y + 13);
+    this.crackGraphics.lineTo(queen.x + 44, y + 8);
+    this.crackGraphics.strokePath();
+
+    this.crackGraphics.lineStyle(1, 0x120f0d, 0.82);
+    this.crackGraphics.beginPath();
+    this.crackGraphics.moveTo(queen.x - 10, y + 5);
+    this.crackGraphics.lineTo(queen.x - 18, y + 18);
+    this.crackGraphics.moveTo(queen.x + 16, y + 9);
+    this.crackGraphics.lineTo(queen.x + 12, y + 23);
+    this.crackGraphics.strokePath();
   }
 
   private updateEdgeHitZones(state: Readonly<GameState>): void {
