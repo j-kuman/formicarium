@@ -49,6 +49,7 @@ page.on('pageerror', (err) => {
 process.stdout.write(`Connecting to http://localhost:${PORT}...\n`);
 try {
   await page.goto(`http://localhost:${PORT}`, { timeout: 10_000 });
+  await page.addStyleTag({ content: 'html, body { overflow: hidden; margin: 0; padding: 0; }' });
 } catch {
   process.stderr.write(`✗ Could not reach localhost:${PORT}. Start the dev server first (npm run dev).\n`);
   await browser.close();
