@@ -82,7 +82,11 @@ export class BuildPanel {
       wordWrap: { width: 126 },
     });
 
-    background.on("pointerdown", () => {
+    background.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.leftButtonDown()) {
+        return;
+      }
+
       if (!this.currentState || !this.canUseDefense(this.currentState, defense)) {
         return;
       }
@@ -125,7 +129,11 @@ export class BuildPanel {
       .setOrigin(0.5);
     const button: UnitButton = { unit, container, background, label, countText, count: 1 };
 
-    background.on("pointerdown", () => {
+    background.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.leftButtonDown()) {
+        return;
+      }
+
       if (!this.currentState || !this.canUseUnit(this.currentState, unit, button.count)) {
         return;
       }
@@ -143,7 +151,11 @@ export class BuildPanel {
       this.tooltip.setVisible(false);
     });
     countText.setInteractive({ useHandCursor: true });
-    countText.on("pointerdown", () => {
+    countText.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.leftButtonDown()) {
+        return;
+      }
+
       button.count = this.nextCount(button.count);
       label.setText(this.unitButtonLabel(unit, button.count));
       countText.setText(`x${button.count}`);

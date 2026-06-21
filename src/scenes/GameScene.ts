@@ -47,6 +47,7 @@ export class GameScene extends Phaser.Scene {
     );
     this.cameras.main.setBackgroundColor("#050403");
     this.cameras.main.setBounds(0, 0, 1200, 1100);
+    this.registerPlacementCancelInput();
     this.mapRenderer.init(this.sim.getState());
   }
 
@@ -63,5 +64,20 @@ export class GameScene extends Phaser.Scene {
     this.enemyRenderer.update(state, events);
     this.defenseRenderer.update(state);
     this.squadRenderer.update(state);
+  }
+
+  private registerPlacementCancelInput(): void {
+    this.input.mouse?.disableContextMenu();
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (pointer.rightButtonDown()) {
+        this.cancelPlacement();
+      }
+    });
+    this.input.keyboard?.on("keydown-ESC", () => this.cancelPlacement());
+  }
+
+  private cancelPlacement(): void {
+    this.commandQueue.finishPlacement();
+    this.game.canvas.style.cursor = "default";
   }
 }
