@@ -4,7 +4,7 @@
   "resourceCaps": { "food": 200, "soil": 9999, "resin": 9999 },
   "recoveryIncomePer10Ticks": { "food": 8, "soil": 4, "resin": 2 },
   "recoveryPhaseDurationTicks": 120,
-  "buildPhaseDurationTicks": 8600,
+  "buildPhaseDurationTicks": 7200,
   "breachRevealDelayTicks": 180,
   "cameraShakeDurationMs": 1000,
   "cameraShakeIntensity": 0.02,
