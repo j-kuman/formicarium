@@ -92,5 +92,58 @@
       { "enemy": "spider_runner", "count": 5, "entrance": "entrance_left", "target": "queen", "intervalTicks": 60 },
       { "enemy": "robber_ant", "count": 4, "entrance": "entrance_left", "target": "food", "intervalTicks": 50 }
     ]
+  },
+  {
+    "wave": 10,
+    "act": 2,
+    "warningTicks": 360,
+    "note": "First deep wave — survivable, teaches new threat vector",
+    "spawns": [
+      { "enemy": "pale_borer", "count": 2, "entrance": "deep_entrance_a", "target": "queen", "intervalTicks": 240 },
+      { "enemy": "spore_mite", "count": 4, "entrance": "deep_entrance_a", "target": "brood", "intervalTicks": 60 }
+    ]
+  },
+  {
+    "wave": 11,
+    "act": 2,
+    "warningTicks": 300,
+    "spawns": [
+      { "enemy": "spore_mite", "count": 6, "entrance": "deep_entrance_a", "target": "brood", "intervalTicks": 50 },
+      { "enemy": "blind_centipede_larva", "count": 1, "entrance": "deep_entrance_b", "target": "queen", "intervalTicks": 0 },
+      { "enemy": "mite_swarm", "count": 3, "entrance": "entrance_center", "target": "brood", "intervalTicks": 60 }
+    ]
+  },
+  {
+    "wave": 12,
+    "act": 2,
+    "warningTicks": 270,
+    "spawns": [
+      { "enemy": "pheromone_leech", "count": 2, "entrance": "deep_entrance_a", "target": "junction", "intervalTicks": 180 },
+      { "enemy": "brood_worm", "count": 2, "entrance": "deep_entrance_b", "target": "brood", "intervalTicks": 120 },
+      { "enemy": "beetle_tank", "count": 2, "entrance": "entrance_center", "target": "queen", "intervalTicks": 150 }
+    ]
+  },
+  {
+    "wave": 13,
+    "act": 2,
+    "warningTicks": 270,
+    "spawns": [
+      { "enemy": "blind_centipede_larva", "count": 2, "entrance": "deep_entrance_b", "target": "queen", "intervalTicks": 300 },
+      { "enemy": "spore_mite", "count": 8, "entrance": "deep_entrance_a", "target": "brood", "intervalTicks": 40 },
+      { "enemy": "wasp_assassin", "count": 3, "entrance": "entrance_right", "target": "queen", "intervalTicks": 90 },
+      { "enemy": "pheromone_leech", "count": 2, "entrance": "deep_entrance_a", "target": "junction", "intervalTicks": 150 }
+    ]
+  },
+  {
+    "wave": 14,
+    "act": 2,
+    "warningTicks": 360,
+    "isBossWave": true,
+    "afterWaveEvent": "victory",
+    "spawns": [
+      { "enemy": "glass_pale_centipede", "count": 1, "entrance": "deep_entrance_b", "target": "queen", "intervalTicks": 0 },
+      { "enemy": "spore_mite", "count": 10, "entrance": "deep_entrance_a", "target": "brood", "intervalTicks": 35 },
+      { "enemy": "pheromone_leech", "count": 3, "entrance": "deep_entrance_a", "target": "junction", "intervalTicks": 120 }
+    ]
   }
 ]

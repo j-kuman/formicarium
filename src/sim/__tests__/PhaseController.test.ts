@@ -118,6 +118,28 @@ describe("PhaseController", () => {
     expect(state.phaseTick).toBe(tuning.recoveryPhaseDurationTicks - 1);
   });
 
+  it("recovery after wave 9 advances to wave 10 scout when wave 10 exists", () => {
+    const state = gameState({
+      phase: "recovery",
+      phaseTick: tuning.recoveryPhaseDurationTicks - 1,
+      wave: 9,
+      breachTriggered: true,
+      deepNodesVisible: true,
+    });
+    const events = tickWithWaves(state, wavesThroughWave10);
+
+    expect(state.phase).toBe("scout");
+    expect(state.phase).not.toBe("ended");
+    expect(state.wave).toBe(10);
+    expect(events[0]).toMatchObject({
+      type: "PHASE_TRANSITION",
+      fromPhase: "recovery",
+      toPhase: "scout",
+      wave: 10,
+      payload: { fromPhase: "recovery", toPhase: "scout", wave: 10 },
+    });
+  });
+
   it("recovery advances to ended after recoveryPhaseDurationTicks when no next wave exists", () => {
     const state = gameState({ phase: "recovery", phaseTick: 119, wave: 2 });
     tick(state);
@@ -156,7 +178,11 @@ describe("PhaseController", () => {
 });
 
 function tick(state: GameState, commands: InputCommand[] = []) {
-  return new PhaseController(waves).tick(state, commands, tuning);
+  return tickWithWaves(state, waves, commands);
+}
+
+function tickWithWaves(state: GameState, testWaves: WaveData[], commands: InputCommand[] = []) {
+  return new PhaseController(testWaves).tick(state, commands, tuning);
 }
 
 function transitionReadyState(phase: Phase): GameState {
@@ -202,6 +228,12 @@ function gameState(overrides: Partial<GameState> = {}): GameState {
 const waves: WaveData[] = [
   { wave: 1, act: 1, warningTicks: 300, spawns: [] },
   { wave: 2, act: 1, warningTicks: 200, spawns: [] },
+];
+
+const wavesThroughWave10: WaveData[] = [
+  ...waves,
+  { wave: 9, act: 1, warningTicks: 240, spawns: [] },
+  { wave: 10, act: 2, warningTicks: 360, spawns: [] },
 ];
 
 const tuning: TuningData = {
