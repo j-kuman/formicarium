@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import { SFX_DATA } from "../audio/sfxData";
 import { GameSim } from "../sim/GameSim";
 import type {
+  AdaptationData,
   ChamberData,
   DefenseData,
   EnemyData,
@@ -53,6 +54,7 @@ export class BootScene extends Phaser.Scene {
       defenses: this.cache.json.get("defenses") as DefenseData[],
       chambers: this.cache.json.get("chambers") as ChamberData[],
       units: this.cache.json.get("units") as UnitData[],
+      adaptations: this.cache.json.get("adaptations") as AdaptationData[],
     });
 
     this.scene.start("GameScene");
@@ -118,9 +120,7 @@ export class BootScene extends Phaser.Scene {
 
   private ringTexture(key: string, radius: number, color: number): void {
     const graphics = this.make.graphics({ x: 0, y: 0 }, false);
-    graphics.lineStyle(4, color, 1);
-    graphics.fillStyle(0x050403, 0.72);
-    graphics.fillCircle(radius, radius, radius - 2);
+    graphics.lineStyle(3, color, 1);
     graphics.strokeCircle(radius, radius, radius - 2);
     graphics.generateTexture(key, radius * 2, radius * 2);
     graphics.destroy();
@@ -130,68 +130,68 @@ export class BootScene extends Phaser.Scene {
 const SURFACE_SVG_TEXTURES = [
   {
     key: "node_queen",
-    url: new URL("../../assets/textures/node_queen.svg", import.meta.url).href,
-    width: 80,
-    height: 80,
+    width: 96,
+    height: 96,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='42%25' r='56%25'%3E%3Cstop offset='0%25' stop-color='%23ffd8b1'/%3E%3Cstop offset='72%25' stop-color='%23b77a38'/%3E%3Cstop offset='100%25' stop-color='%235b3518'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cellipse cx='48' cy='50' rx='34' ry='29' fill='url(%23g)' stroke='%23f2c56d' stroke-width='4'/%3E%3Ccircle cx='38' cy='44' r='4' fill='%23231810'/%3E%3Ccircle cx='58' cy='44' r='4' fill='%23231810'/%3E%3Cpath d='M34 60c9 8 19 8 28 0' stroke='%23231810' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E",
   },
   {
     key: "node_brood",
-    url: new URL("../../assets/textures/node_brood.svg", import.meta.url).href,
-    width: 70,
-    height: 70,
+    width: 84,
+    height: 84,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 84 84'%3E%3Cellipse cx='42' cy='44' rx='30' ry='25' fill='%23f2c94c' stroke='%238a6c23' stroke-width='4'/%3E%3Ccircle cx='30' cy='38' r='5' fill='%23fff3b0'/%3E%3Ccircle cx='47' cy='50' r='6' fill='%23fff3b0'/%3E%3Ccircle cx='55' cy='34' r='4' fill='%23fff3b0'/%3E%3C/svg%3E",
   },
   {
     key: "node_food",
-    url: new URL("../../assets/textures/node_food.svg", import.meta.url).href,
-    width: 70,
-    height: 70,
+    width: 78,
+    height: 78,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 78 78'%3E%3Crect x='13' y='18' width='52' height='43' rx='14' fill='%236fcf97' stroke='%232b6e42' stroke-width='4'/%3E%3Cpath d='M22 46c10-11 22-13 34-3' stroke='%23f7fff8' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E",
   },
   {
     key: "node_barracks",
-    url: new URL("../../assets/textures/node_barracks.svg", import.meta.url).href,
-    width: 70,
-    height: 70,
+    width: 82,
+    height: 82,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 82 82'%3E%3Cpath d='M12 60 41 13l29 47z' fill='%23d46a3a' stroke='%237b351d' stroke-width='5'/%3E%3Cpath d='M30 58V42h22v16' fill='%23f2994a' stroke='%237b351d' stroke-width='4'/%3E%3C/svg%3E",
   },
   {
     key: "node_junction",
-    url: new URL("../../assets/textures/node_junction.svg", import.meta.url).href,
-    width: 56,
-    height: 56,
+    width: 72,
+    height: 72,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Ccircle cx='36' cy='36' r='25' fill='%23856a4a' stroke='%23412d1b' stroke-width='4'/%3E%3Cpath d='M20 36h32M36 20v32' stroke='%23d8b077' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E",
   },
   {
     key: "node_entrance",
-    url: new URL("../../assets/textures/node_entrance.svg", import.meta.url).href,
-    width: 40,
-    height: 40,
+    width: 64,
+    height: 64,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='32' cy='38' rx='24' ry='16' fill='%23201611' stroke='%23704a2b' stroke-width='5'/%3E%3Cpath d='M14 38c8-15 26-20 36-3' stroke='%23916a43' stroke-width='5' fill='none'/%3E%3C/svg%3E",
   },
   {
     key: "enemy_surface",
-    url: new URL("../../assets/textures/enemy_surface.svg", import.meta.url).href,
-    width: 20,
-    height: 20,
+    width: 32,
+    height: 32,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='17' rx='10' ry='7' fill='%23231f20'/%3E%3Ccircle cx='10' cy='13' r='4' fill='%23333233'/%3E%3Ccircle cx='22' cy='13' r='4' fill='%23333233'/%3E%3Cpath d='M7 22 1 27M25 22l6 5M11 24l-2 7M21 24l2 7' stroke='%23231f20' stroke-width='2'/%3E%3C/svg%3E",
+  },
+  {
+    key: "defense_resin_barricade",
+    width: 52,
+    height: 28,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 28'%3E%3Crect x='4' y='7' width='44' height='14' rx='6' fill='%23c0392b' stroke='%23751d16' stroke-width='4'/%3E%3Ccircle cx='16' cy='14' r='4' fill='%23ff8a80'/%3E%3Ccircle cx='31' cy='14' r='3' fill='%23ff8a80'/%3E%3C/svg%3E",
+  },
+  {
+    key: "defense_acid_sprayer",
+    width: 48,
+    height: 48,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='17' fill='%2327ae60' stroke='%23105d33' stroke-width='4'/%3E%3Cpath d='M24 8v32M10 24h28' stroke='%23d7ffd9' stroke-width='4'/%3E%3C/svg%3E",
+  },
+  {
+    key: "defense_guard_post",
+    width: 52,
+    height: 52,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 52'%3E%3Cpath d='M26 6 44 18v22H8V18z' fill='%23f2994a' stroke='%23854c16' stroke-width='4'/%3E%3Cpath d='M19 40V24h14v16' fill='%23fff0c2'/%3E%3C/svg%3E",
   },
   {
     key: "enemy_boss",
-    url: new URL("../../assets/textures/enemy_boss.svg", import.meta.url).href,
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
+    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 42 42'%3E%3Cpath d='M21 2 40 21 21 40 2 21z' fill='%23eb5757' stroke='%237a1212' stroke-width='4'/%3E%3Cpath d='M12 21h18M21 12v18' stroke='%23fff0f0' stroke-width='3'/%3E%3C/svg%3E",
   },
-  {
-    key: "defense_barricade",
-    url: new URL("../../assets/textures/defense_barricade.svg", import.meta.url).href,
-    width: 30,
-    height: 8,
-  },
-  {
-    key: "defense_acid",
-    url: new URL("../../assets/textures/defense_acid.svg", import.meta.url).href,
-    width: 20,
-    height: 20,
-  },
-  {
-    key: "defense_guard",
-    url: new URL("../../assets/textures/defense_guard.svg", import.meta.url).href,
-    width: 20,
-    height: 20,
-  },
-] as const;
+];

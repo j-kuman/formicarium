@@ -1,14 +1,16 @@
 import Phaser from "phaser";
 
 import type { CommandQueue } from "../input/CommandQueue";
-import type { ChamberData, DefenseData, UnitData } from "../types/data";
+import type { AdaptationData, ChamberData, DefenseData, UnitData } from "../types/data";
 import type { DefenseInstance, GameState, Resources, SquadInstance, SquadStance } from "../types/game";
+import { AdaptationPanel } from "./AdaptationPanel";
 
 export class SelectionPanel {
   private readonly container: Phaser.GameObjects.Container;
   private readonly defenseDataById: Map<string, DefenseData>;
   private readonly chamberDataById: Map<string, ChamberData>;
   private readonly unitDataById: Map<string, UnitData>;
+  private readonly adaptationPanel: AdaptationPanel;
   private lastRenderKey: string | null = null;
   private background: Phaser.GameObjects.Rectangle | null = null;
 
@@ -18,10 +20,12 @@ export class SelectionPanel {
     defenses: DefenseData[],
     chambers: ChamberData[],
     units: UnitData[],
+    adaptations: AdaptationData[],
   ) {
     this.defenseDataById = new Map(defenses.map((defense) => [defense.id, defense]));
     this.chamberDataById = new Map(chambers.map((chamber) => [chamber.id, chamber]));
     this.unitDataById = new Map(units.map((unit) => [unit.id, unit]));
+    this.adaptationPanel = new AdaptationPanel(scene, adaptations);
     this.container = this.scene.add.container(872, 92).setDepth(1600).setVisible(false);
   }
 
@@ -60,6 +64,8 @@ export class SelectionPanel {
       .join("|");
     const selectedNode = state.selectedKind === "node" ? state.nodes.get(state.selectedId ?? "") : null;
     const selectedEdge = state.selectedKind === "edge" ? state.edges.get(state.selectedId ?? "") : null;
+    const samples = [...state.samples.entries()].map(([sampleId, count]) => `${sampleId}:${count}`).join("|");
+    const unlockedAdaptations = [...state.unlockedAdaptations.values()].join("|");
 
     return [
       state.selectedKind,
@@ -68,6 +74,8 @@ export class SelectionPanel {
       selectedEdge ? `${selectedEdge.hp}:${selectedEdge.maxHp}` : "",
       selectedDefenses,
       selectedSquads,
+      samples,
+      unlockedAdaptations,
       state.resources.food,
       state.resources.soil,
       state.resources.resin,
@@ -84,6 +92,11 @@ export class SelectionPanel {
     this.addText(18, 16, chamber?.name ?? node.id, 20, "#ffffff");
     this.addText(18, 50, `HP ${Math.ceil(node.hp)} / ${node.maxHp}`, 15);
     this.addText(18, 74, `Defense slots ${this.occupiedNodeSlots(state, node.id)} / ${node.defenseSlots}`, 15);
+
+    if (node.type === "study") {
+      this.adaptationPanel.render(this.container, state, 112);
+      return;
+    }
 
     let rowY = 112;
     if (chamber?.upgrade && node.upgradeLevel === 0 && this.canAfford(state.resources, chamber.upgrade.cost)) {
