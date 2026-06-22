@@ -43,10 +43,7 @@ export class BuildPanel {
       .setVisible(false);
     this.container.add(this.tooltip);
 
-    this.buttons = defenses
-      .filter((defense) => !defense.requiresAdaptation)
-      .slice(0, 3)
-      .map((defense, index) => this.createDefenseButton(defense, index));
+    this.buttons = defenses.map((defense, index) => this.createDefenseButton(defense, index));
     this.unitButtons = units.slice(0, 3).map((unit, index) => this.createUnitButton(unit, index));
   }
 
@@ -55,7 +52,9 @@ export class BuildPanel {
     this.container.setVisible(state.phase === "build");
 
     for (const button of this.buttons) {
-      const enabled = this.canUseDefense(state, button.defense);
+      const unlocked = this.defenseUnlocked(state, button.defense);
+      const enabled = unlocked && this.canUseDefense(state, button.defense);
+      button.container.setVisible(unlocked);
       button.background.setFillStyle(enabled ? 0x1f6f8b : 0x3a3a3a, enabled ? 0.92 : 0.62);
       button.label.setAlpha(enabled ? 1 : 0.45);
     }
@@ -174,8 +173,11 @@ export class BuildPanel {
   }
 
   private canUseDefense(state: Readonly<GameState>, defense: DefenseData): boolean {
-    const unlocked = !defense.requiresAdaptation || state.unlockedAdaptations.has(defense.requiresAdaptation);
-    return unlocked && this.canAfford(state.resources, defense.cost);
+    return this.defenseUnlocked(state, defense) && this.canAfford(state.resources, defense.cost);
+  }
+
+  private defenseUnlocked(state: Readonly<GameState>, defense: DefenseData): boolean {
+    return !defense.requiresAdaptation || state.unlockedAdaptations.has(defense.requiresAdaptation);
   }
 
   private canUseUnit(state: Readonly<GameState>, unit: UnitData, count: number): boolean {
