@@ -97,6 +97,13 @@ export interface UnitData {
   requiresBarracks?: boolean;
 }
 
+export interface AdaptationData {
+  id: string;
+  name: string;
+  requires: Record<string, number>;
+  unlocks: string;
+}
+
 export interface NodeData {
   id: string;
   type: NodeState["type"];
