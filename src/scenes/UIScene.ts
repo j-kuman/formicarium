@@ -4,6 +4,7 @@ import { SoundManager } from "../audio/SoundManager";
 import { CommandQueue } from "../input/CommandQueue";
 import { GameSim } from "../sim/GameSim";
 import type {
+  AdaptationData,
   ChamberData,
   DefenseData,
   EnemyData,
@@ -54,6 +55,7 @@ export class UIScene extends Phaser.Scene {
       this.cache.json.get("defenses") as DefenseData[],
       this.cache.json.get("chambers") as ChamberData[],
       this.cache.json.get("units") as UnitData[],
+      this.cache.json.get("adaptations") as AdaptationData[],
     );
     this.waveAlert = new WaveAlert(
       this,
@@ -84,6 +86,7 @@ export class UIScene extends Phaser.Scene {
       defenses: this.cache.json.get("defenses") as DefenseData[],
       chambers: this.cache.json.get("chambers") as ChamberData[],
       units: this.cache.json.get("units") as UnitData[],
+      adaptations: this.cache.json.get("adaptations") as AdaptationData[],
     });
   }
 
