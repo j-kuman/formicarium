@@ -27,6 +27,7 @@ const NODE_TEXTURES: Record<NodeState["type"], string> = {
 export class MapRenderer {
   private readonly edgeGraphics: Phaser.GameObjects.Graphics;
   private readonly crackGraphics: Phaser.GameObjects.Graphics;
+  private readonly workerGraphics: Phaser.GameObjects.Graphics;
   private readonly defenseDataById: Map<string, DefenseData>;
   private readonly nodeViews = new Map<string, NodeView>();
   private readonly edgeHitZones = new Map<string, Phaser.GameObjects.Zone>();
@@ -40,6 +41,7 @@ export class MapRenderer {
     this.defenseDataById = new Map(defenseData.map((defense) => [defense.id, defense]));
     this.edgeGraphics = this.scene.add.graphics();
     this.crackGraphics = this.scene.add.graphics();
+    this.workerGraphics = this.scene.add.graphics();
   }
 
   init(state: Readonly<GameState>): void {
@@ -81,6 +83,7 @@ export class MapRenderer {
     this.currentState = state;
     this.redrawEdges(state);
     this.redrawCrack(state);
+    this.redrawWorkerSweep(state);
     this.updateEdgeHitZones(state);
 
     for (const node of state.nodes.values()) {
@@ -97,7 +100,7 @@ export class MapRenderer {
     view.container.setPosition(node.x, node.y);
     view.container.setAlpha(node.visible ? 1 : 0);
     view.container.setVisible(node.visible);
-    view.sprite.setTint(node.contaminated ? 0x8ee05f : 0xffffff);
+    view.sprite.setTint(this.nodeTint(node, state));
     this.redrawHpBar(view.hpBar, node);
     this.redrawSelection(view.selection, node, state);
   }
@@ -248,6 +251,28 @@ export class MapRenderer {
     this.crackGraphics.strokePath();
   }
 
+  private redrawWorkerSweep(state: Readonly<GameState>): void {
+    this.workerGraphics.clear();
+    if (!state.claimedDeepNodes) {
+      return;
+    }
+
+    let workerIndex = 0;
+    for (const edge of state.edges.values()) {
+      const nodeA = state.nodes.get(edge.nodeA);
+      const nodeB = state.nodes.get(edge.nodeB);
+      if (!nodeA || !nodeB || !edge.visible || (!this.isDeepNode(nodeA) && !this.isDeepNode(nodeB))) {
+        continue;
+      }
+
+      const progress = ((this.scene.time.now / 1200 + workerIndex * 0.31) % 1 + 1) % 1;
+      const point = getPointOnEdge(edge, nodeA, nodeB, progress);
+      this.workerGraphics.fillStyle(0xf2c94c, 0.88);
+      this.workerGraphics.fillCircle(point.x, point.y, 4);
+      workerIndex += 1;
+    }
+  }
+
   private updateEdgeHitZones(state: Readonly<GameState>): void {
     for (const edge of state.edges.values()) {
       const zone = this.edgeHitZones.get(edge.id);
@@ -297,6 +322,22 @@ export class MapRenderer {
 
     graphics.lineStyle(3, 0xf2f2f2, 0.9);
     graphics.strokeCircle(0, 0, this.selectionRadius(node.type));
+  }
+
+  private nodeTint(node: NodeState, state: Readonly<GameState>): number {
+    if (node.contaminated) {
+      return 0x8ee05f;
+    }
+
+    if (state.claimedDeepNodes && this.isDeepNode(node)) {
+      return 0xf2c94c;
+    }
+
+    return 0xffffff;
+  }
+
+  private isDeepNode(node: NodeState): boolean {
+    return node.type === "deep_junction" || node.type === "deep_entrance" || node.type === "study";
   }
 
   private selectionRadius(type: NodeState["type"]): number {
