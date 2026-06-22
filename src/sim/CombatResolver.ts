@@ -65,6 +65,8 @@ export class CombatResolver {
         this.applyGuardPost(state, defense, defenseData, deltaMs, events);
       } else if (defense.typeId === "acid_sprayer") {
         this.applyAcidSprayer(state, defense, defenseData, deltaMs, events);
+      } else if (defense.typeId === "spore_scrubber") {
+        this.applySporeScrubber(state, defense, defenseData, deltaMs);
       }
     }
   }
@@ -148,6 +150,26 @@ export class CombatResolver {
     }
   }
 
+  private applySporeScrubber(
+    state: GameState,
+    defense: DefenseInstance,
+    defenseData: DefenseData,
+    deltaMs: number,
+  ): void {
+    if (!defense.nodeId) {
+      return;
+    }
+
+    const node = state.nodes.get(defense.nodeId);
+    if (!node || node.contaminationLevel <= 0) {
+      return;
+    }
+
+    const cleanAmount = (defenseData.effects.cleanRatePerTick ?? 0) * (deltaMs / 1000);
+    node.contaminationLevel = Math.max(0, node.contaminationLevel - cleanAmount);
+    node.contaminated = node.contaminationLevel > 0;
+  }
+
   private tickDots(state: GameState, events: SimEvent[]): void {
     for (const enemy of [...state.enemies]) {
       if (enemy.dotTicksRemaining <= 0) {
@@ -205,6 +227,7 @@ export class CombatResolver {
 
   private enemyReachedGoal(state: GameState, enemy: EnemyInstance, events: SimEvent[]): void {
     const targetNode = state.nodes.get(enemy.targetNodeId);
+    const enemyData = this.enemyData(enemy);
     if (targetNode) {
       targetNode.hp = Math.max(0, targetNode.hp - enemy.attack);
       events.push({
@@ -228,8 +251,10 @@ export class CombatResolver {
         });
       }
 
-      if (this.enemyData(enemy)?.onReach === "panic_nearby_squads") {
-        this.panicNearbySquads(state, targetNode.id, events);
+      if (enemyData?.tags.includes("causes_panic")) {
+        this.panicNearbySquads(state, targetNode.id, 2, "causes_panic", events);
+      } else if (enemyData?.tags.includes("disrupts_squads") && enemyData.onReach === "panic_nearby_squads") {
+        this.panicNearbySquads(state, targetNode.id, 1, "panic_nearby_squads", events);
       }
     }
 
@@ -248,10 +273,43 @@ export class CombatResolver {
       return;
     }
 
+    this.contaminateCurrentNodeOnDeath(state, enemy, events);
     this.removeEnemy(state, enemy);
     this.decrementRemaining(state);
     this.resourceManager.grant(state, this.enemyData(enemy)?.reward ?? {});
     events.push({ type: "ENEMY_DIED", tick: state.tick, enemyId: enemy.id, enemyTypeId: enemy.typeId });
+  }
+
+  private contaminateCurrentNodeOnDeath(state: GameState, enemy: EnemyInstance, events: SimEvent[]): void {
+    if (this.enemyData(enemy)?.onDeath !== "contaminate_node") {
+      return;
+    }
+
+    const nodeId = this.currentNodeId(state, enemy);
+    const node = nodeId ? state.nodes.get(nodeId) : undefined;
+    if (!node) {
+      return;
+    }
+
+    node.contaminationLevel = 1.0;
+    node.contaminated = true;
+    events.push({
+      type: "NODE_CONTAMINATED",
+      tick: state.tick,
+      enemyId: enemy.id,
+      enemyTypeId: enemy.typeId,
+      nodeId: node.id,
+      payload: { nodeId: node.id },
+    });
+  }
+
+  private currentNodeId(state: GameState, enemy: EnemyInstance): string | null {
+    const edge = state.edges.get(enemy.edgeId);
+    if (!edge) {
+      return enemy.targetNodeId;
+    }
+
+    return enemy.progress >= 0.5 ? edge.nodeB : edge.nodeA;
   }
 
   private enemyInNodeRange(state: GameState, enemy: EnemyInstance, nodeId: string): boolean {
@@ -267,13 +325,19 @@ export class CombatResolver {
     return Boolean(squad.assignedNodeId && this.enemyInNodeRange(state, enemy, squad.assignedNodeId));
   }
 
-  private panicNearbySquads(state: GameState, nodeId: string, events: SimEvent[]): void {
+  private panicNearbySquads(
+    state: GameState,
+    nodeId: string,
+    radiusHops: number,
+    source: "panic_nearby_squads" | "causes_panic",
+    events: SimEvent[],
+  ): void {
     if (!this.tuning) {
       return;
     }
 
     for (const squad of state.squads) {
-      if (!this.squadWithinOneHopOfNode(state, squad, nodeId)) {
+      if (!this.squadWithinHopsOfNode(state, squad, nodeId, radiusHops)) {
         continue;
       }
 
@@ -284,36 +348,58 @@ export class CombatResolver {
         type: "SQUAD_PANICKED",
         tick: state.tick,
         nodeId,
-        payload: { squadId: squad.id, unitTypeId: squad.typeId, source: "panic_nearby_squads" },
+        payload: { squadId: squad.id, unitTypeId: squad.typeId, source },
       });
     }
   }
 
-  private squadWithinOneHopOfNode(state: GameState, squad: SquadInstance, nodeId: string): boolean {
-    if (squad.assignedNodeId === nodeId) {
-      return true;
+  private squadWithinHopsOfNode(state: GameState, squad: SquadInstance, nodeId: string, radiusHops: number): boolean {
+    if (squad.assignedNodeId) {
+      return this.nodeDistance(state, nodeId, squad.assignedNodeId) <= radiusHops;
     }
 
     if (squad.assignedEdgeId) {
       const edge = state.edges.get(squad.assignedEdgeId);
-      return Boolean(edge && (edge.nodeA === nodeId || edge.nodeB === nodeId));
-    }
-
-    if (!squad.assignedNodeId) {
-      return false;
-    }
-
-    for (const edge of state.edges.values()) {
-      if (!edge.visible || (edge.nodeA !== nodeId && edge.nodeB !== nodeId)) {
-        continue;
+      if (!edge) {
+        return false;
       }
 
-      if (edge.nodeA === squad.assignedNodeId || edge.nodeB === squad.assignedNodeId) {
-        return true;
-      }
+      const edgeRadius = Math.max(0, radiusHops - 1);
+      return this.nodeDistance(state, nodeId, edge.nodeA) <= edgeRadius || this.nodeDistance(state, nodeId, edge.nodeB) <= edgeRadius;
     }
 
     return false;
+  }
+
+  private nodeDistance(state: GameState, fromNodeId: string, toNodeId: string): number {
+    if (fromNodeId === toNodeId) {
+      return 0;
+    }
+
+    const visited = new Set<string>([fromNodeId]);
+    const queue: Array<{ nodeId: string; distance: number }> = [{ nodeId: fromNodeId, distance: 0 }];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      for (const edge of state.edges.values()) {
+        if (!edge.visible || (edge.nodeA !== current.nodeId && edge.nodeB !== current.nodeId)) {
+          continue;
+        }
+
+        const nextNodeId = edge.nodeA === current.nodeId ? edge.nodeB : edge.nodeA;
+        if (visited.has(nextNodeId)) {
+          continue;
+        }
+
+        if (nextNodeId === toNodeId) {
+          return current.distance + 1;
+        }
+
+        visited.add(nextNodeId);
+        queue.push({ nodeId: nextNodeId, distance: current.distance + 1 });
+      }
+    }
+
+    return Number.POSITIVE_INFINITY;
   }
 
   private enemyData(enemy: EnemyInstance): EnemyData | undefined {

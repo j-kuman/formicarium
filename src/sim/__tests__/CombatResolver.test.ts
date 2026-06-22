@@ -188,174 +188,244 @@ describe("CombatResolver", () => {
     expect(state.gameOver).toBe(true);
     expect(events.map((event) => event.type)).toContain("GAME_OVER");
   });
-it("enemySpeedScale scales movement progress", () => {
-  const normalSpeed = gameState({ enemies: [enemy({ speed: 1 })] });
-  const doubleSpeed = gameState({ enemies: [enemy({ speed: 1 })] });
 
-  new CombatResolver(enemyData, defenseData, new ResourceManager(), 1).tick(normalSpeed, 1000);
-  new CombatResolver(enemyData, defenseData, new ResourceManager(), 2).tick(doubleSpeed, 1000);
+  it("enemySpeedScale scales movement progress", () => {
+    const normalSpeed = gameState({ enemies: [enemy({ speed: 1 })] });
+    const doubleSpeed = gameState({ enemies: [enemy({ speed: 1 })] });
 
-  expect(normalSpeed.enemies[0]?.progress).toBeCloseTo(0.01);
-  expect(doubleSpeed.enemies[0]?.progress).toBeCloseTo(0.02);
-});
+    new CombatResolver(enemyData, defenseData, new ResourceManager(), 1).tick(normalSpeed, 1000);
+    new CombatResolver(enemyData, defenseData, new ResourceManager(), 2).tick(doubleSpeed, 1000);
 
-it("enemy with multiple pathEdges transitions on first completed edge and reaches goal on second completed edge", () => {
-  const state = gameState({
-    enemies: [enemy({ speed: 200, pathEdges: ["edge_entrance_mid", "edge_mid_queen"] })],
+    expect(normalSpeed.enemies[0]?.progress).toBeCloseTo(0.01);
+    expect(doubleSpeed.enemies[0]?.progress).toBeCloseTo(0.02);
   });
 
-  const firstTickEvents = resolver().tick(state, 1000);
+  it("enemy with multiple pathEdges transitions on first completed edge and reaches goal on second completed edge", () => {
+    const state = gameState({
+      enemies: [enemy({ speed: 200, pathEdges: ["edge_entrance_mid", "edge_mid_queen"] })],
+    });
 
-  expect(state.enemies).toHaveLength(1);
-  expect(state.enemies[0]?.edgeId).toBe("edge_mid_queen");
-  expect(state.enemies[0]?.progress).toBe(0);
-  expect(firstTickEvents.map((event) => event.type)).not.toContain("ENEMY_REACHED_GOAL");
+    const firstTickEvents = resolver().tick(state, 1000);
 
-  const secondTickEvents = resolver().tick(state, 1000);
+    expect(state.enemies).toHaveLength(1);
+    expect(state.enemies[0]?.edgeId).toBe("edge_mid_queen");
+    expect(state.enemies[0]?.progress).toBe(0);
+    expect(firstTickEvents.map((event) => event.type)).not.toContain("ENEMY_REACHED_GOAL");
 
-  expect(state.enemies).toHaveLength(0);
-  expect(state.queenHp).toBe(195);
-  expect(secondTickEvents.map((event) => event.type)).toContain("ENEMY_REACHED_GOAL");
-});
+    const secondTickEvents = resolver().tick(state, 1000);
 
-it("DoT stops dealing damage after dotTicksRemaining reaches 0", () => {
-  const state = gameState({
-    enemies: [enemy({ hp: 30, speed: 0, dotDamage: 4, dotTicksRemaining: 1 })],
+    expect(state.enemies).toHaveLength(0);
+    expect(state.queenHp).toBe(195);
+    expect(secondTickEvents.map((event) => event.type)).toContain("ENEMY_REACHED_GOAL");
   });
 
-  resolver().tick(state, 1000);
+  it("DoT stops dealing damage after dotTicksRemaining reaches 0", () => {
+    const state = gameState({
+      enemies: [enemy({ hp: 30, speed: 0, dotDamage: 4, dotTicksRemaining: 1 })],
+    });
 
-  expect(state.enemies[0]?.hp).toBe(26);
-  expect(state.enemies[0]?.dotTicksRemaining).toBe(0);
+    resolver().tick(state, 1000);
 
-  resolver().tick(state, 1000);
+    expect(state.enemies[0]?.hp).toBe(26);
+    expect(state.enemies[0]?.dotTicksRemaining).toBe(0);
 
-  expect(state.enemies[0]?.hp).toBe(26);
-  expect(state.enemies[0]?.dotTicksRemaining).toBe(0);
-});
+    resolver().tick(state, 1000);
 
-it("acid_sprayer does not re-apply DoT before cooldownTicks elapse", () => {
-  const state = gameState({
-    enemies: [enemy({ hp: 30, speed: 0 })],
-    defenses: [defense({ cooldownTicksRemaining: 0, typeId: "acid_sprayer", nodeId: "junction" })],
+    expect(state.enemies[0]?.hp).toBe(26);
+    expect(state.enemies[0]?.dotTicksRemaining).toBe(0);
   });
 
-  resolver().tick(state, 1000);
+  it("acid_sprayer does not re-apply DoT before cooldownTicks elapse", () => {
+    const state = gameState({
+      enemies: [enemy({ hp: 30, speed: 0 })],
+      defenses: [defense({ cooldownTicksRemaining: 0, typeId: "acid_sprayer", nodeId: "junction" })],
+    });
 
-  expect(state.enemies[0]?.hp).toBe(22);
-  expect(state.enemies[0]?.dotTicksRemaining).toBe(2);
-  expect(state.defenses[0]?.cooldownTicksRemaining).toBe(60);
+    resolver().tick(state, 1000);
 
-  resolver().tick(state, 1000);
+    expect(state.enemies[0]?.hp).toBe(22);
+    expect(state.enemies[0]?.dotTicksRemaining).toBe(2);
+    expect(state.defenses[0]?.cooldownTicksRemaining).toBe(60);
 
-  expect(state.enemies[0]?.hp).toBe(14);
-  expect(state.enemies[0]?.dotTicksRemaining).toBe(1);
-  expect(state.defenses[0]?.cooldownTicksRemaining).toBe(59);
-});
+    resolver().tick(state, 1000);
 
-it("resin_barricade slow is transient after enemy leaves its edge", () => {
-  const state = gameState({
-    enemies: [enemy({ edgeId: "edge_entrance_mid", speed: 0 })],
-    defenses: [defense({ typeId: "resin_barricade", edgeId: "edge_entrance_mid" })],
+    expect(state.enemies[0]?.hp).toBe(14);
+    expect(state.enemies[0]?.dotTicksRemaining).toBe(1);
+    expect(state.defenses[0]?.cooldownTicksRemaining).toBe(59);
   });
 
-  resolver().tick(state, 1000);
+  it("resin_barricade slow is transient after enemy leaves its edge", () => {
+    const state = gameState({
+      enemies: [enemy({ edgeId: "edge_entrance_mid", speed: 0 })],
+      defenses: [defense({ typeId: "resin_barricade", edgeId: "edge_entrance_mid" })],
+    });
 
-  expect(state.enemies[0]?.slowFactor).toBe(0.65);
+    resolver().tick(state, 1000);
 
-  state.enemies[0]!.edgeId = "edge_mid_queen";
+    expect(state.enemies[0]?.slowFactor).toBe(0.65);
 
-  resolver().tick(state, 1000);
+    state.enemies[0]!.edgeId = "edge_mid_queen";
 
-  expect(state.enemies[0]?.slowFactor).toBe(1);
-});
+    resolver().tick(state, 1000);
 
-it("guard_post damages all enemies in range and resin_barricade slows all enemies on its edge", () => {
-  const state = gameState({
-    enemies: [
-      enemy({ id: "enemy_1", hp: 30, speed: 0, edgeId: "edge_entrance_mid" }),
-      enemy({ id: "enemy_2", hp: 30, speed: 0, edgeId: "edge_entrance_mid" }),
-    ],
-    defenses: [
-      defense({ id: "defense_1", typeId: "guard_post", nodeId: "junction" }),
-      defense({ id: "defense_2", typeId: "resin_barricade", edgeId: "edge_entrance_mid" }),
-    ],
+    expect(state.enemies[0]?.slowFactor).toBe(1);
   });
 
-  resolver().tick(state, 1000);
+  it("guard_post damages all enemies in range and resin_barricade slows all enemies on its edge", () => {
+    const state = gameState({
+      enemies: [
+        enemy({ id: "enemy_1", hp: 30, speed: 0, edgeId: "edge_entrance_mid" }),
+        enemy({ id: "enemy_2", hp: 30, speed: 0, edgeId: "edge_entrance_mid" }),
+      ],
+      defenses: [
+        defense({ id: "defense_1", typeId: "guard_post", nodeId: "junction" }),
+        defense({ id: "defense_2", typeId: "resin_barricade", edgeId: "edge_entrance_mid" }),
+      ],
+    });
 
-  expect(state.enemies[0]?.hp).toBe(18);
-  expect(state.enemies[1]?.hp).toBe(18);
-  expect(state.enemies[0]?.slowFactor).toBe(0.65);
-  expect(state.enemies[1]?.slowFactor).toBe(0.65);
-});
+    resolver().tick(state, 1000);
 
-it("enemy killed by acid DoT grants reward and emits ENEMY_DIED", () => {
-  const state = gameState({
-    enemies: [enemy({ hp: 8, speed: 0 })],
-    defenses: [defense({ cooldownTicksRemaining: 0, typeId: "acid_sprayer", nodeId: "junction" })],
-    resources: { food: 10, resin: 10, soil: 10 },
+    expect(state.enemies[0]?.hp).toBe(18);
+    expect(state.enemies[1]?.hp).toBe(18);
+    expect(state.enemies[0]?.slowFactor).toBe(0.65);
+    expect(state.enemies[1]?.slowFactor).toBe(0.65);
   });
 
-  const events = resolver().tick(state, 1000);
+  it("enemy killed by acid DoT grants reward and emits ENEMY_DIED", () => {
+    const state = gameState({
+      enemies: [enemy({ hp: 8, speed: 0 })],
+      defenses: [defense({ cooldownTicksRemaining: 0, typeId: "acid_sprayer", nodeId: "junction" })],
+      resources: { food: 10, resin: 10, soil: 10 },
+    });
 
-  expect(state.enemies).toHaveLength(0);
-  expect(state.resources.food).toBe(12);
-  expect(events.map((event) => event.type)).toContain("ENEMY_DIED");
-});
+    const events = resolver().tick(state, 1000);
 
-it("soldier squad assigned to a node deals DPS to enemies on adjacent edges", () => {
-  const state = gameState({
-    enemies: [enemy({ typeId: "beetle_tank", hp: 60, maxHp: 60, speed: 0 })],
-    squads: [squad({ assignedNodeId: "junction", count: 2, typeId: "soldier", hp: 60, maxHp: 60 })],
+    expect(state.enemies).toHaveLength(0);
+    expect(state.resources.food).toBe(12);
+    expect(events.map((event) => event.type)).toContain("ENEMY_DIED");
   });
 
-  squadResolver().tick(state, 1000);
+  it("soldier squad assigned to a node deals DPS to enemies on adjacent edges", () => {
+    const state = gameState({
+      enemies: [enemy({ typeId: "beetle_tank", hp: 60, maxHp: 60, speed: 0 })],
+      squads: [squad({ assignedNodeId: "junction", count: 2, typeId: "soldier", hp: 60, maxHp: 60 })],
+    });
 
-  expect(state.enemies[0]?.hp).toBe(40);
-  expect(state.squads[0]?.hp).toBe(55);
-  expect(state.squads[0]?.inCombat).toBe(true);
-});
+    squadResolver().tick(state, 1000);
 
-it("removes a squad and emits SQUAD_PANICKED when retaliation drops squad hp to zero", () => {
-  const state = gameState({
-    enemies: [enemy({ hp: 100, speed: 0 })],
-    squads: [squad({ hp: 1, maxHp: 30, assignedEdgeId: "edge_entrance_mid", assignedNodeId: null })],
+    expect(state.enemies[0]?.hp).toBe(40);
+    expect(state.squads[0]?.hp).toBe(55);
+    expect(state.squads[0]?.inCombat).toBe(true);
   });
 
-  const events = squadResolver().tick(state, 1000);
+  it("removes a squad and emits SQUAD_PANICKED when retaliation drops squad hp to zero", () => {
+    const state = gameState({
+      enemies: [enemy({ hp: 100, speed: 0 })],
+      squads: [squad({ hp: 1, maxHp: 30, assignedEdgeId: "edge_entrance_mid", assignedNodeId: null })],
+    });
 
-  expect(state.squads).toHaveLength(0);
-  expect(events.map((event) => event.type)).toContain("SQUAD_PANICKED");
-});
+    const events = squadResolver().tick(state, 1000);
 
-it("pheromone leech reaching a node temporarily forces nearby squads to retreat", () => {
-  const state = gameState({
-    enemies: [
-      enemy({
-        typeId: "pheromone_leech",
-        edgeId: "edge_mid_queen",
-        pathEdges: ["edge_mid_queen"],
-        targetNodeId: "queen_chamber",
-        speed: 200,
+    expect(state.squads).toHaveLength(0);
+    expect(events.map((event) => event.type)).toContain("SQUAD_PANICKED");
+  });
+
+  it("pheromone leech reaching a node temporarily forces nearby squads to retreat", () => {
+    const state = gameState({
+      enemies: [
+        enemy({
+          typeId: "pheromone_leech",
+          edgeId: "edge_mid_queen",
+          pathEdges: ["edge_mid_queen"],
+          targetNodeId: "queen_chamber",
+          speed: 200,
+        }),
+      ],
+      squads: [squad({ assignedNodeId: "junction", stance: "hold" })],
+    });
+
+    const events = squadResolver().tick(state, 1000);
+
+    expect(state.squads[0]?.stance).toBe("retreat");
+    expect(state.squads[0]?.previousStance).toBe("hold");
+    expect(state.squads[0]?.panicTicksRemaining).toBe(100);
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: "SQUAD_PANICKED",
+        payload: expect.objectContaining({ squadId: "squad_1", source: "panic_nearby_squads" }),
       }),
-    ],
-    squads: [squad({ assignedNodeId: "junction", stance: "hold" })],
+    );
   });
 
-  const events = squadResolver().tick(state, 1000);
+  it("contaminating enemy death sets current node contaminationLevel to 1.0 and emits NODE_CONTAMINATED", () => {
+    const state = gameState({
+      enemies: [enemy({ typeId: "spore_mite", hp: 1, progress: 0.75, speed: 0 })],
+      defenses: [defense({ typeId: "guard_post", nodeId: "junction" })],
+    });
 
-  expect(state.squads[0]?.stance).toBe("retreat");
-  expect(state.squads[0]?.previousStance).toBe("hold");
-  expect(state.squads[0]?.panicTicksRemaining).toBe(100);
-  expect(events).toContainEqual(
-    expect.objectContaining({
-      type: "SQUAD_PANICKED",
-      payload: expect.objectContaining({ squadId: "squad_1", source: "panic_nearby_squads" }),
-    }),
-  );
-});
+    const events = resolver().tick(state, 1000);
 
+    expect(state.nodes.get("junction")?.contaminationLevel).toBe(1.0);
+    expect(state.nodes.get("junction")?.contaminated).toBe(true);
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: "NODE_CONTAMINATED",
+        nodeId: "junction",
+        payload: expect.objectContaining({ nodeId: "junction" }),
+      }),
+    );
+  });
+
+  it("squad disruption on reach supports boss panic within two hops", () => {
+    const state = gameState({
+      enemies: [
+        enemy({
+          typeId: "glass_pale_centipede",
+          edgeId: "edge_mid_queen",
+          pathEdges: ["edge_mid_queen"],
+          targetNodeId: "queen_chamber",
+          speed: 200,
+        }),
+      ],
+      squads: [squad({ assignedNodeId: "entrance", stance: "hold" })],
+    });
+
+    const events = squadResolver().tick(state, 1000);
+
+    expect(state.squads[0]?.stance).toBe("retreat");
+    expect(state.squads[0]?.previousStance).toBe("hold");
+    expect(state.squads[0]?.panicTicksRemaining).toBe(100);
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: "SQUAD_PANICKED",
+        payload: expect.objectContaining({ squadId: "squad_1", source: "causes_panic" }),
+      }),
+    );
+  });
+
+  it("spore scrubber drains contaminationLevel toward 0 and clears contaminated flag", () => {
+    const contaminatedNode = node("junction", "junction");
+    contaminatedNode.contaminationLevel = 0.25;
+    contaminatedNode.contaminated = true;
+    const state = gameState({
+      nodes: new Map([
+        ["entrance", node("entrance", "entrance")],
+        ["junction", contaminatedNode],
+        ["queen_chamber", node("queen_chamber", "queen", 200)],
+      ]),
+      defenses: [defense({ typeId: "spore_scrubber", nodeId: "junction" })],
+    });
+
+    resolver().tick(state, 1000);
+
+    expect(state.nodes.get("junction")?.contaminationLevel).toBeCloseTo(0.05);
+    expect(state.nodes.get("junction")?.contaminated).toBe(true);
+
+    resolver().tick(state, 1000);
+
+    expect(state.nodes.get("junction")?.contaminationLevel).toBe(0);
+    expect(state.nodes.get("junction")?.contaminated).toBe(false);
+  });
 });
 
 function resolver() {
@@ -535,6 +605,32 @@ const enemyData = [
     reward: { food: 3 },
     onReach: "panic_nearby_squads",
   },
+  {
+    id: "spore_mite",
+    name: "Spore Mite",
+    hp: 6,
+    attack: 3,
+    speed: 1.5,
+    armor: 0,
+    targetPriority: ["brood", "junction"],
+    tags: ["deep", "swarm", "contaminates"],
+    act: 2,
+    reward: { food: 1 },
+    onDeath: "contaminate_node",
+  },
+  {
+    id: "glass_pale_centipede",
+    name: "Glass-Pale Centipede",
+    hp: 350,
+    attack: 80,
+    speed: 0.6,
+    armor: 20,
+    targetPriority: ["queen"],
+    tags: ["deep", "boss", "ignores_resin", "causes_panic"],
+    act: 2,
+    reward: { food: 50, soil: 30, resin: 20 },
+    bossWave: 14,
+  },
 ];
 
 const unitData: UnitData[] = [
@@ -576,6 +672,15 @@ const defenseData: DefenseData[] = [
     hp: 80,
     effects: { slowFactor: 0.65 },
     tags: ["slow"],
+  },
+  {
+    id: "spore_scrubber",
+    name: "Spore Scrubber",
+    placement: "node",
+    cost: {},
+    hp: 50,
+    effects: { cleanRatePerTick: 0.2 },
+    tags: ["deep", "adaptation", "cleanse"],
   },
 ];
 
