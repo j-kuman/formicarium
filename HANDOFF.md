@@ -5,7 +5,7 @@ When a build lane (Codex or the ChatGPT connector) hits an escalation trigger
 handoff below** instead of thrashing or conforming a test to a bug. The
 orchestrator (Claude/Opus) picks it up, resolves it locally, records the outcome
 in the escalation log, and clears the Active block. Then the implementer pulls and
-continues.
+continues. 
 
 The point is to transfer **debugging state**, not a status report: what you tried,
 why each attempt failed, and your current hypothesis — so the orchestrator starts
