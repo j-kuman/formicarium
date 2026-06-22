@@ -82,6 +82,12 @@ while (Date.now() < deadline) {
     const sim = window.__sim;
     if (!sim) return null;
     const s = sim.getState();
+    const contaminatedNodes = [];
+    for (const [id, node] of s.nodes) {
+      if (node.contaminated) contaminatedNodes.push({ id, level: Math.round(node.contaminationLevel * 100) / 100 });
+    }
+    const samples = Object.fromEntries(s.samples);
+    const adaptations = [...s.unlockedAdaptations];
     return {
       tick: s.tick,
       phase: s.phase,
@@ -101,6 +107,9 @@ while (Date.now() < deadline) {
         slowFactor: e.slowFactor,
         hp: Math.round(e.hp * 10) / 10,
       })),
+      contaminatedNodes,
+      samples,
+      adaptations,
     };
     });
   } catch (err) {
@@ -133,21 +142,29 @@ while (Date.now() < deadline) {
 
   if (snap.phase === 'wave' && snap.enemies.length > 0) {
     const ts = new Date().toTimeString().slice(0, 8);
-    process.stdout.write(`[${ts}] tick=${snap.tick} enemies=${snap.enemies.length}\n`);
+    const contamStr = snap.contaminatedNodes.length
+      ? ` 🟡CONTAMINATED:[${snap.contaminatedNodes.map(n => `${n.id}(${n.level})`).join(',')}]`
+      : '';
+    process.stdout.write(`[${ts}] tick=${snap.tick} enemies=${snap.enemies.length}${contamStr}\n`);
     for (const e of snap.enemies) {
       const onBarricade = barricadeEdges.has(e.edgeId);
       const slowed = e.slowFactor < 1;
-      const tag = onBarricade && slowed
+      const isDeep = e.edgeId?.startsWith('e_deep') || e.edgeId?.startsWith('e_queen_deep');
+      const barricadeTag = onBarricade && slowed
         ? ` ✓SLOWED(${e.slowFactor})`
         : onBarricade && !slowed
           ? ` ✗BUG:on-barricade-not-slowed`
           : '';
-      process.stdout.write(`  ${e.id}(${e.typeId}) edge=${e.edgeId} prog=${e.progress} hp=${e.hp}${tag}\n`);
+      const deepTag = isDeep ? ' ✓DEEP' : '';
+      process.stdout.write(`  ${e.id}(${e.typeId}) edge=${e.edgeId} prog=${e.progress} hp=${e.hp}${barricadeTag}${deepTag}\n`);
     }
   } else if (snap.phase === 'build' && snapCount % 6 === 0) {
     const ts = new Date().toTimeString().slice(0, 8);
     const dStr = snap.defenses.map((d) => `${d.typeId}@${d.edgeId ?? d.nodeId}`).join(', ') || 'none';
+    const sampleStr = Object.entries(snap.samples).map(([k,v]) => `${k}:${v}`).join(', ') || 'none';
+    const adaptStr = snap.adaptations.length ? snap.adaptations.join(', ') : 'none';
     process.stdout.write(`[${ts}] BUILD tick=${snap.tick} food=${snap.resources.food} resin=${snap.resources.resin} defenses=[${dStr}]\n`);
+    process.stdout.write(`         samples=[${sampleStr}] adaptations=[${adaptStr}]\n`);
   }
 
   await new Promise((r) => setTimeout(r, POLL_MS));
