@@ -1,3 +1,4 @@
+import { AdaptationManager } from "./AdaptationManager";
 import { BreachController } from "./BreachController";
 import { CombatResolver } from "./CombatResolver";
 import { Pathfinder } from "./Pathfinder";
@@ -6,7 +7,7 @@ import { ResourceManager } from "./ResourceManager";
 import { SquadController } from "./SquadController";
 import { WaveSpawner } from "./WaveSpawner";
 import type { InputCommand } from "../types/commands";
-import type { ChamberData, DefenseData, EnemyData, MapData, TuningData, UnitData, WaveData } from "../types/data";
+import type { AdaptationData, ChamberData, DefenseData, EnemyData, MapData, TuningData, UnitData, WaveData } from "../types/data";
 import type { DefenseInstance, EdgeState, GameState, NodeState, Resources, SquadInstance } from "../types/game";
 import type { SimEvent } from "../types/events";
 
@@ -18,6 +19,7 @@ interface GameSimData {
   defenses: DefenseData[];
   chambers: ChamberData[];
   units: UnitData[];
+  adaptations?: AdaptationData[];
 }
 
 export class GameSim {
@@ -29,6 +31,7 @@ export class GameSim {
   private readonly squadController: SquadController;
   private readonly combatResolver: CombatResolver;
   private readonly breachController: BreachController;
+  private readonly adaptationManager: AdaptationManager;
   private accumulatorMs = 0;
   private nextDefenseId = 1;
   private nextSquadId = 1;
@@ -53,6 +56,7 @@ export class GameSim {
       data.tuning,
     );
     this.breachController = new BreachController(data.waves, data.tuning);
+    this.adaptationManager = new AdaptationManager(data.adaptations ?? [], data.enemies);
 
     this.resourceManager.tick(this.state, this.tuning);
   }
@@ -91,6 +95,8 @@ export class GameSim {
     events.push(...this.waveSpawner.tick(this.state));
     events.push(...this.squadController.tick(this.state, deltaMs));
     events.push(...this.combatResolver.tick(this.state, deltaMs));
+    this.processEnemyDeathSamples(events);
+    events.push(...this.adaptationManager.tick(this.state));
     events.push(...this.breachController.tick(this.state));
     events.push(...this.processAfterWaveEvent());
     events.push(...this.resourceManager.tick(this.state, this.tuning));
@@ -246,6 +252,16 @@ export class GameSim {
     this.startedWaves.add(this.state.wave);
     events.push(...this.breachController.onWaveStart(this.state, this.state.wave));
     events.push(...this.waveSpawner.startWave(this.state, this.state.wave));
+  }
+
+  private processEnemyDeathSamples(events: SimEvent[]): void {
+    const sampleEvents: SimEvent[] = [];
+    for (const event of events) {
+      if (event.type === "ENEMY_DIED" && event.enemyTypeId) {
+        sampleEvents.push(...this.adaptationManager.onEnemyDied(this.state, event.enemyTypeId));
+      }
+    }
+    events.push(...sampleEvents);
   }
 
   private processAfterWaveEvent(): SimEvent[] {
