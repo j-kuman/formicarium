@@ -1,7 +1,7 @@
 # Formicarium Implementation Plan v2
 ## ChatGPT 5.5 High + Jeff+Claude Dev Method
 
-_Last updated: 2026-06-21 (P1 merged)_
+_Last updated: 2026-06-22 (P2 merged)_
 
 > **v2 purpose:** Routes remaining work between ChatGPT 5.5 High (GitHub connector, raises PRs) and the Jeff+Claude lane (balance passes, testing, review). Architecture, schemas, and task specs are unchanged from v1 — this document is a scheduling layer over IMPLEMENTATION_PLAN.md, not a replacement. When Codex comes back online (~2026-06-25), reconcile with §6 below.
 
@@ -19,6 +19,7 @@ _Last updated: 2026-06-21 (P1 merged)_
 **Signed off / merged:**
 - T22 balance pass — complete 2026-06-21. Beetle armor 10→5, HP 60→80, soldier cost 65→40 food. Barricade slow confirmed via Playwright. P1 unlocked.
 - P1 breach resume — merged 2026-06-21 (PR #16, db3bd79). Waves 10–14 verbatim from spec, crack sprite, PhaseController test. P2 unlocked.
+- P2 deep enemy mechanics — merged 2026-06-22 (PR #17, 2b6a6f1). Contamination, squad disruption, boss panic, spore scrubber, act-2 texture routing. P3 unlocked.
 
 **Parked branch (Codex worktree, do not touch):**
 - `codex/park-t23-breach-resume-wip` — early T23 work, unreviewed
