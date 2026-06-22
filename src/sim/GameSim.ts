@@ -22,12 +22,20 @@ interface GameSimData {
   adaptations?: AdaptationData[];
 }
 
+interface GameSimSnapshot {
+  state: GameState;
+  startedWaves: number[];
+  processedAfterWaveEvents: number[];
+  nextDefenseId: number;
+  nextSquadId: number;
+}
+
 export class GameSim {
   private readonly state: GameState;
   private readonly tuning: TuningData;
   private readonly phaseController: PhaseController;
   private readonly resourceManager: ResourceManager;
-  private readonly waveSpawner: WaveSpawner;
+  private waveSpawner: WaveSpawner;
   private readonly squadController: SquadController;
   private readonly combatResolver: CombatResolver;
   private readonly breachController: BreachController;
@@ -37,6 +45,7 @@ export class GameSim {
   private nextSquadId = 1;
   private readonly startedWaves = new Set<number>();
   private readonly processedAfterWaveEvents = new Set<number>();
+  private wave10Snapshot: GameSimSnapshot | null = null;
 
   constructor(private readonly data: GameSimData) {
     this.tuning = data.tuning;
@@ -84,12 +93,22 @@ export class GameSim {
     return this.state;
   }
 
+  resetToWave10Snapshot(): boolean {
+    if (!this.wave10Snapshot) {
+      return false;
+    }
+
+    this.restoreSnapshot(this.wave10Snapshot);
+    return true;
+  }
+
   private fixedStep(commands: InputCommand[], deltaMs: number): SimEvent[] {
     const events: SimEvent[] = [];
     this.processCommands(commands);
 
     const phaseEvents = this.phaseController.tick(this.state, commands, this.tuning);
     events.push(...phaseEvents);
+    this.captureWave10SnapshotIfNeeded();
     this.startWaveIfNeeded(events);
 
     events.push(...this.waveSpawner.tick(this.state));
@@ -342,6 +361,82 @@ export class GameSim {
       scaled[resource as keyof Resources] = (amount ?? 0) * count;
     }
     return scaled;
+  }
+
+  private captureWave10SnapshotIfNeeded(): void {
+    if (this.wave10Snapshot || this.state.wave !== 10 || this.state.phase !== "scout") {
+      return;
+    }
+
+    this.wave10Snapshot = {
+      state: this.cloneState(this.state),
+      startedWaves: [...this.startedWaves],
+      processedAfterWaveEvents: [...this.processedAfterWaveEvents],
+      nextDefenseId: this.nextDefenseId,
+      nextSquadId: this.nextSquadId,
+    };
+  }
+
+  private restoreSnapshot(snapshot: GameSimSnapshot): void {
+    const restored = this.cloneState(snapshot.state);
+    this.state.phase = restored.phase;
+    this.state.act = restored.act;
+    this.state.wave = restored.wave;
+    this.state.tick = restored.tick;
+    this.state.phaseTick = restored.phaseTick;
+    this.state.resources = restored.resources;
+    this.state.nodes.clear();
+    for (const [id, node] of restored.nodes) {
+      this.state.nodes.set(id, node);
+    }
+    this.state.edges.clear();
+    for (const [id, edge] of restored.edges) {
+      this.state.edges.set(id, edge);
+    }
+    this.state.enemies = restored.enemies;
+    this.state.squads = restored.squads;
+    this.state.defenses = restored.defenses;
+    this.state.queenHp = restored.queenHp;
+    this.state.queenMaxHp = restored.queenMaxHp;
+    this.state.samples = restored.samples;
+    this.state.unlockedAdaptations = restored.unlockedAdaptations;
+    this.state.foreshadowEvents = restored.foreshadowEvents;
+    this.state.breachTriggered = restored.breachTriggered;
+    this.state.deepNodesVisible = restored.deepNodesVisible;
+    this.state.claimedDeepNodes = restored.claimedDeepNodes;
+    this.state.gameOver = restored.gameOver;
+    this.state.victory = restored.victory;
+    this.state.waveEnemiesRemaining = restored.waveEnemiesRemaining;
+    this.state.selectedId = restored.selectedId;
+    this.state.selectedKind = restored.selectedKind;
+
+    this.startedWaves.clear();
+    for (const wave of snapshot.startedWaves) {
+      this.startedWaves.add(wave);
+    }
+    this.processedAfterWaveEvents.clear();
+    for (const wave of snapshot.processedAfterWaveEvents) {
+      this.processedAfterWaveEvents.add(wave);
+    }
+    this.nextDefenseId = snapshot.nextDefenseId;
+    this.nextSquadId = snapshot.nextSquadId;
+    this.accumulatorMs = 0;
+    this.waveSpawner = new WaveSpawner(this.data.waves, this.data.enemies, new Pathfinder(this.state.nodes, this.state.edges));
+  }
+
+  private cloneState(state: GameState): GameState {
+    return {
+      ...state,
+      resources: { ...state.resources },
+      nodes: new Map([...state.nodes.entries()].map(([id, node]) => [id, { ...node }])),
+      edges: new Map([...state.edges.entries()].map(([id, edge]) => [id, { ...edge }])),
+      enemies: state.enemies.map((enemy) => ({ ...enemy, pathEdges: [...enemy.pathEdges] })),
+      squads: state.squads.map((squad) => ({ ...squad })),
+      defenses: state.defenses.map((defense) => ({ ...defense })),
+      samples: new Map(state.samples),
+      unlockedAdaptations: new Set(state.unlockedAdaptations),
+      foreshadowEvents: state.foreshadowEvents.map((event) => ({ ...event })),
+    };
   }
 
   private initialState(map: MapData, tuning: TuningData): GameState {
