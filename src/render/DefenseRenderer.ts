@@ -67,14 +67,14 @@ export class DefenseRenderer {
     const defenseData = this.defenseDataById.get(typeId);
 
     if (typeId === "resin_barricade" || defenseData?.tags.includes("slow")) {
-      return "defense_barricade";
+      return "defense_resin_barricade";
     }
 
     if (typeId === "acid_sprayer" || defenseData?.tags.includes("dot")) {
-      return "defense_acid";
+      return "defense_acid_sprayer";
     }
 
-    return "defense_guard";
+    return "defense_guard_post";
   }
 
   private getDefensePosition(state: Readonly<GameState>, defense: DefenseInstance): Phaser.Math.Vector2 {
