@@ -77,11 +77,11 @@ export class EnemyRenderer {
   }
 
   private textureForEnemy(enemyData: EnemyData | undefined): string {
-    if (enemyData?.tags.includes("boss")) {
+    if (enemyData?.bossWave === 14 || enemyData?.tags.includes("boss")) {
       return "enemy_boss";
     }
 
-    if (enemyData?.tags.includes("deep")) {
+    if (enemyData?.act === 2 || enemyData?.tags.includes("deep")) {
       return "enemy_deep";
     }
 
