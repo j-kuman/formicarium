@@ -2,13 +2,14 @@ import Phaser from "phaser";
 
 import type { EnemyData, TuningData } from "../types/data";
 import type { SimEvent } from "../types/events";
-import type { EnemyInstance, GameState } from "../types/game";
+import type { EnemyInstance, GameState, NodeState } from "../types/game";
 import { getPointOnStateEdge } from "./edgeGeometry";
 
 export class EnemyRenderer {
   private readonly containers = new Map<string, Phaser.GameObjects.Container>();
   private readonly dyingEnemies = new Map<string, number>();
   private readonly fadingEnemies = new Set<string>();
+  private readonly retreatingEnemies = new Set<string>();
   private readonly enemyDataById: Map<string, EnemyData>;
 
   constructor(
@@ -20,8 +21,14 @@ export class EnemyRenderer {
   }
 
   update(state: Readonly<GameState>, events: SimEvent[]): void {
+    if (!state.victory) {
+      this.retreatingEnemies.clear();
+    }
+
     for (const event of events) {
-      if (event.type === "ENEMY_DIED" && event.enemyId && this.containers.has(event.enemyId)) {
+      if (event.type === "VICTORY") {
+        this.retreatEnemies(state);
+      } else if (event.type === "ENEMY_DIED" && event.enemyId && this.containers.has(event.enemyId)) {
         this.dyingEnemies.set(event.enemyId, event.tick + this.tuning.enemyDeathLingerTicks);
       }
     }
@@ -45,6 +52,10 @@ export class EnemyRenderer {
     }
 
     for (const enemy of state.enemies) {
+      if (this.retreatingEnemies.has(enemy.id)) {
+        continue;
+      }
+
       const container = this.getOrCreateContainer(enemy);
       const point = getPointOnStateEdge(state, enemy.edgeId, enemy.progress);
       container.setPosition(point.x, point.y);
@@ -74,6 +85,50 @@ export class EnemyRenderer {
 
     this.containers.set(enemy.id, container);
     return container;
+  }
+
+  private retreatEnemies(state: Readonly<GameState>): void {
+    for (const enemy of state.enemies) {
+      const container = this.getOrCreateContainer(enemy);
+      const currentPoint = getPointOnStateEdge(state, enemy.edgeId, enemy.progress);
+      const retreatTarget = this.closestEntrance(state, currentPoint) ?? currentPoint;
+      container.setPosition(currentPoint.x, currentPoint.y);
+      this.retreatingEnemies.add(enemy.id);
+
+      this.scene.tweens.add({
+        targets: container,
+        x: retreatTarget.x,
+        y: retreatTarget.y,
+        alpha: 0,
+        duration: 1000,
+        ease: "Sine.easeIn",
+        onComplete: () => {
+          container.destroy(true);
+          this.containers.delete(enemy.id);
+          this.dyingEnemies.delete(enemy.id);
+          this.fadingEnemies.delete(enemy.id);
+        },
+      });
+    }
+  }
+
+  private closestEntrance(state: Readonly<GameState>, point: Phaser.Math.Vector2): NodeState | null {
+    let closest: NodeState | null = null;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    for (const node of state.nodes.values()) {
+      if (!node.visible || (node.type !== "entrance" && node.type !== "deep_entrance")) {
+        continue;
+      }
+
+      const distance = Phaser.Math.Distance.Between(point.x, point.y, node.x, node.y);
+      if (distance < closestDistance) {
+        closest = node;
+        closestDistance = distance;
+      }
+    }
+
+    return closest;
   }
 
   private textureForEnemy(enemyData: EnemyData | undefined): string {
