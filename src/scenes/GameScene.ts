@@ -45,8 +45,10 @@ export class GameScene extends Phaser.Scene {
       this.cache.json.get("tuning") as TuningData,
       this.cache.json.get("map") as MapData,
     );
-    this.cameras.main.setBackgroundColor("#050403");
     this.cameras.main.setBounds(0, 0, 1200, 900);
+    this.add.tileSprite(0, 0, 1200, 900, "bg_dirt").setOrigin(0, 0);
+    this.add.tileSprite(0, 0, 1200, 34, "bg_sky").setOrigin(0, 0);
+    this.add.tileSprite(0, 34, 1200, 32, "bg_grass_border").setOrigin(0, 0);
     this.registerPlacementCancelInput();
     this.mapRenderer.init(this.sim.getState());
   }
