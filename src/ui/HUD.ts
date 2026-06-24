@@ -28,6 +28,8 @@ export class HUD {
     const defenseNameById = new Map(defenses.map((defense) => [defense.id, defense.name]));
     const unitNameById = new Map(units.map((unit) => [unit.id, unit.name]));
 
+    this.scene.add.rectangle(600, 23, 1200, 46, 0x0d0a08, 0.88).setOrigin(0.5, 0.5);
+
     this.resourcesText = this.scene.add.text(24, 18, "", {
       color: "#f2f2f2",
       fontFamily: "Arial, sans-serif",
