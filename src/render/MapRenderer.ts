@@ -198,17 +198,35 @@ export class MapRenderer {
   private redrawEdges(state: Readonly<GameState>): void {
     this.edgeGraphics.clear();
 
-    for (const edge of state.edges.values()) {
+    const visibleEdges = [...state.edges.values()].filter((edge) => {
       const nodeA = state.nodes.get(edge.nodeA);
       const nodeB = state.nodes.get(edge.nodeB);
-      if (!nodeA || !nodeB || !edge.visible) {
-        continue;
-      }
+      return nodeA && nodeB && edge.visible;
+    });
 
+    // Pass 1: outer wall — wider, dark earth border
+    for (const edge of visibleEdges) {
+      const nodeA = state.nodes.get(edge.nodeA)!;
+      const nodeB = state.nodes.get(edge.nodeB)!;
+      const lineWidth = edge.width === "large" ? 18 : 10;
+      this.edgeGraphics.lineStyle(lineWidth + 14, 0x120a04, 0.96);
+      this.edgeGraphics.beginPath();
+      this.edgeGraphics.moveTo(nodeA.x, nodeA.y);
+      for (let step = 1; step <= EDGE_CURVE_SEGMENTS; step += 1) {
+        const point = getPointOnEdge(edge, nodeA, nodeB, step / EDGE_CURVE_SEGMENTS);
+        this.edgeGraphics.lineTo(point.x, point.y);
+      }
+      this.edgeGraphics.strokePath();
+    }
+
+    // Pass 2: inner floor — the walkable tunnel surface
+    for (const edge of visibleEdges) {
+      const nodeA = state.nodes.get(edge.nodeA)!;
+      const nodeB = state.nodes.get(edge.nodeB)!;
       const lineWidth = edge.width === "large" ? 18 : 10;
       const hasBarricade = state.defenses.some((d) => d.edgeId === edge.id && d.typeId === "resin_barricade");
-      const color = edge.contaminated ? 0x7bbf45 : hasBarricade ? 0xc0392b : 0x6b4a2b;
-      this.edgeGraphics.lineStyle(lineWidth, color, 0.82);
+      const color = edge.contaminated ? 0x7bbf45 : hasBarricade ? 0xc0392b : 0x7a5535;
+      this.edgeGraphics.lineStyle(lineWidth, color, 0.9);
       this.edgeGraphics.beginPath();
       this.edgeGraphics.moveTo(nodeA.x, nodeA.y);
       for (let step = 1; step <= EDGE_CURVE_SEGMENTS; step += 1) {
